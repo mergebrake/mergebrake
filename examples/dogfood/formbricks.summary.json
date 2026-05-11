@@ -1,0 +1,128 @@
+{
+  "repo": "formbricks/formbricks",
+  "commit": "cad10b8810e0017d1abdce5b15fbaa65f36dacb4",
+  "tool": "mergebrake@0.0.1",
+  "scannedFiles": 141,
+  "findings": 249,
+  "verdict": "BLOCK",
+  "riskScore": 5368,
+  "bySeverity": {
+    "high": 142,
+    "medium": 56,
+    "critical": 41,
+    "low": 10
+  },
+  "byRule": {
+    "locking/create-index-non-concurrent": 90,
+    "locking/add-foreign-key-without-not-valid": 68,
+    "destructive/drop-column": 32,
+    "destructive/rename-column": 22,
+    "safety/alter-enum-add-value": 10,
+    "locking/alter-column-type": 9,
+    "destructive/drop-table": 9,
+    "safety/update-without-where": 4,
+    "locking/add-not-null-without-default": 2,
+    "locking/set-not-null": 2,
+    "locking/add-primary-key": 1
+  },
+  "topRiskiest": [
+    {
+      "file": "packages/database/migration/20250911192630_remove_deprecated_fields_and_tables/migration.sql",
+      "score": 720,
+      "findings": 15,
+      "rules": [
+        "destructive/drop-column",
+        "destructive/drop-table",
+        "locking/alter-column-type"
+      ]
+    },
+    {
+      "file": "packages/database/migration/20230329205933_init/migration.sql",
+      "score": 648,
+      "findings": 33,
+      "rules": [
+        "locking/add-foreign-key-without-not-valid",
+        "locking/create-index-non-concurrent"
+      ]
+    },
+    {
+      "file": "packages/database/migration/20241010133706_xm_user_identification/migration.sql",
+      "score": 316,
+      "findings": 14,
+      "rules": [
+        "destructive/drop-column",
+        "destructive/rename-column",
+        "locking/create-index-non-concurrent",
+        "locking/set-not-null",
+        "safety/update-without-where"
+      ]
+    },
+    {
+      "file": "packages/database/migration/20231109052945_restructure_session_action_person/migration.sql",
+      "score": 236,
+      "findings": 10,
+      "rules": [
+        "destructive/drop-table",
+        "destructive/rename-column",
+        "locking/add-foreign-key-without-not-valid",
+        "locking/add-not-null-without-default",
+        "locking/alter-column-type",
+        "locking/create-index-non-concurrent"
+      ]
+    },
+    {
+      "file": "packages/database/migration/20241107161932_add_teams/migration.sql",
+      "score": 226,
+      "findings": 11,
+      "rules": [
+        "destructive/drop-column",
+        "destructive/rename-column",
+        "locking/add-foreign-key-without-not-valid",
+        "locking/create-index-non-concurrent"
+      ]
+    },
+    {
+      "file": "packages/database/migration/20231107145619_add_indexes/migration.sql",
+      "score": 184,
+      "findings": 23,
+      "rules": [
+        "locking/create-index-non-concurrent"
+      ]
+    },
+    {
+      "file": "packages/database/migration/20241120150728_product_revamp/migration.sql",
+      "score": 160,
+      "findings": 8,
+      "rules": [
+        "destructive/rename-column"
+      ]
+    },
+    {
+      "file": "packages/database/migration/20241017124431_add_documents_and_insights/migration.sql",
+      "score": 156,
+      "findings": 9,
+      "rules": [
+        "locking/add-foreign-key-without-not-valid",
+        "locking/create-index-non-concurrent"
+      ]
+    },
+    {
+      "file": "packages/database/migration/20250904145727_removes_cron_and_survey_scheduling/migration.sql",
+      "score": 120,
+      "findings": 3,
+      "rules": [
+        "destructive/drop-column",
+        "locking/alter-column-type"
+      ]
+    },
+    {
+      "file": "packages/database/migration/20250326083401_add_api_keys_to_organization/migration.sql",
+      "score": 116,
+      "findings": 7,
+      "rules": [
+        "locking/add-foreign-key-without-not-valid",
+        "locking/create-index-non-concurrent"
+      ]
+    }
+  ]
+}

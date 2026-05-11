@@ -1,0 +1,141 @@
+{
+  "repo": "documenso/documenso",
+  "commit": "87315adb0f51619fdd2ef6b5963dcc54d78b3c6e",
+  "tool": "mergebrake@0.0.1",
+  "scannedFiles": 157,
+  "findings": 391,
+  "verdict": "BLOCK",
+  "riskScore": 7680,
+  "bySeverity": {
+    "high": 215,
+    "medium": 91,
+    "low": 34,
+    "critical": 51
+  },
+  "byRule": {
+    "locking/create-index-non-concurrent": 123,
+    "locking/add-foreign-key-without-not-valid": 114,
+    "destructive/drop-column": 40,
+    "safety/alter-enum-add-value": 34,
+    "locking/set-not-null": 34,
+    "destructive/drop-table": 11,
+    "locking/add-not-null-without-default": 10,
+    "locking/alter-column-type": 9,
+    "safety/update-without-where": 6,
+    "locking/add-primary-key": 5,
+    "locking/add-check-without-not-valid": 3,
+    "safety/set-default-volatile": 2
+  },
+  "topRiskiest": [
+    {
+      "file": "packages/prisma/migrations/20250522054050_add_organisations/migration.sql",
+      "score": 1610,
+      "findings": 61,
+      "rules": [
+        "destructive/drop-column",
+        "destructive/drop-table",
+        "locking/add-foreign-key-without-not-valid",
+        "locking/add-primary-key",
+        "locking/create-index-non-concurrent",
+        "locking/set-not-null"
+      ]
+    },
+    {
+      "file": "packages/prisma/migrations/20250918070645_add_envelopes/migration.sql",
+      "score": 1004,
+      "findings": 37,
+      "rules": [
+        "destructive/drop-column",
+        "destructive/drop-table",
+        "locking/add-foreign-key-without-not-valid",
+        "locking/create-index-non-concurrent",
+        "locking/set-not-null"
+      ]
+    },
+    {
+      "file": "packages/prisma/migrations/20240205040421_add_teams/migration.sql",
+      "score": 488,
+      "findings": 25,
+      "rules": [
+        "locking/add-check-without-not-valid",
+        "locking/add-foreign-key-without-not-valid",
+        "locking/create-index-non-concurrent"
+      ]
+    },
+    {
+      "file": "packages/prisma/migrations/20230922121421_fix_document_meta_schema/migration.sql",
+      "score": 258,
+      "findings": 9,
+      "rules": [
+        "destructive/drop-column",
+        "locking/add-foreign-key-without-not-valid",
+        "locking/create-index-non-concurrent",
+        "locking/set-not-null",
+        "safety/update-without-where"
+      ]
+    },
+    {
+      "file": "packages/prisma/migrations/20230404095503_initial_migration/migration.sql",
+      "score": 240,
+      "findings": 12,
+      "rules": [
+        "locking/add-foreign-key-without-not-valid",
+        "locking/create-index-non-concurrent"
+      ]
+    },
+    {
+      "file": "packages/prisma/migrations/20240227111633_rework_user_profiles/migration.sql",
+      "score": 230,
+      "findings": 7,
+      "rules": [
+        "destructive/drop-column",
+        "locking/add-foreign-key-without-not-valid",
+        "locking/add-not-null-without-default",
+        "locking/add-primary-key",
+        "locking/create-index-non-concurrent"
+      ]
+    },
+    {
+      "file": "packages/prisma/migrations/20231221101005_add_templates/migration.sql",
+      "score": 172,
+      "findings": 11,
+      "rules": [
+        "locking/add-check-without-not-valid",
+        "locking/add-foreign-key-without-not-valid",
+        "locking/create-index-non-concurrent"
+      ]
+    },
+    {
+      "file": "packages/prisma/migrations/20250710050651_add_email_domains/migration.sql",
+      "score": 168,
+      "findings": 9,
+      "rules": [
+        "locking/add-foreign-key-without-not-valid",
+        "locking/create-index-non-concurrent",
+        "locking/set-not-null"
+      ]
+    },
+    {
+      "file": "packages/prisma/migrations/20240606060033_add_public_profiles/migration.sql",
+      "score": 140,
+      "findings": 7,
+      "rules": [
+        "locking/add-foreign-key-without-not-valid",
+        "locking/add-not-null-without-default",
+        "locking/add-primary-key",
+        "locking/alter-column-type",
+        "locking/create-index-non-concurrent"
+      ]
+    },
+    {
+      "file": "packages/prisma/migrations/20250324135010_model_folder_update_id_type_and_add_pinned_property/migration.sql",
+      "score": 120,
+      "findings": 6,
+      "rules": [
+        "locking/add-foreign-key-without-not-valid",
+        "locking/add-primary-key",
+        "locking/alter-column-type"
+      ]
+    }
+  ]
+}

@@ -232,6 +232,14 @@ GitHub teams using Postgres, Prisma, Drizzle, raw SQL, and AI coding agents.
   impact checks so humans can focus on product and data-model intent.
 - Not a generic security scanner.
 
+## Dogfood: what happens on real repos
+
+We ran MergeBrake against the full migration history of three popular Postgres
++ Prisma open-source projects (documenso, trigger.dev, formbricks). On
+**1,066 migrations** the default ruleset surfaced **1,883 findings**. The
+case studies — including the riskiest single migrations with GitHub
+permalinks — live in [`examples/dogfood/README.md`](./examples/dogfood/README.md).
+
 ## Status
 
 Early alpha. APIs and rule IDs may change while the schema impact engine is
