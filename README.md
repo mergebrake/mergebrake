@@ -47,9 +47,10 @@ AI-PR detected (scrutiny x3.00): Claude
 <!--
   The animated demo (assets/demo.gif) is generated locally via Charm VHS so it
   stays reproducible. Run `vhs assets/demo.tape` from the repo root after
-  `npm run build`. Once committed, GitHub renders it inline here:
+  `npm run build`. Once `assets/demo.gif` is committed, GitHub can render it
+  inline here:
 -->
-<a href="./assets/demo.tape"><img alt="MergeBrake demo (≈25s)" src="./assets/demo.gif" /></a>
+[Rebuild the 25-second terminal demo from `assets/demo.tape`](./assets/demo.tape).
 
 > 25 seconds: a PR drops `users.full_name`, MergeBrake flags it as BLOCK with
 > the exact lines of app code that still reach the column through Prisma's

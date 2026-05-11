@@ -29,7 +29,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
 import { fileURLToPath } from "node:url";
-import { execSync, spawnSync } from "node:child_process";
+import { spawnSync } from "node:child_process";
 
 const args = process.argv.slice(2);
 function flag(name, fallback) {
@@ -182,19 +182,21 @@ for (const repo of qualified) {
   try { await fs.rm(dest, { recursive: true, force: true }); } catch {}
 
   process.stdout.write(`  ⤵ clone ${repo.full_name}… `);
-  try {
-    execSync(`git clone --depth 1 --quiet ${repo.clone_url} "${dest}"`, { stdio: ["ignore", "ignore", "pipe"] });
-  } catch (e) {
-    console.log(`FAIL (${(e.stderr || e.message || "").toString().slice(0, 60)})`);
+  const clone = spawnSync(
+    "git",
+    ["clone", "--depth", "1", "--quiet", repo.clone_url, dest],
+    { encoding: "utf-8", stdio: ["ignore", "ignore", "pipe"] },
+  );
+  if (clone.status !== 0) {
+    console.log(`FAIL (${(clone.stderr || clone.error?.message || "").toString().slice(0, 60)})`);
     continue;
   }
   console.log("done");
 
   process.stdout.write(`    ⤵ scan… `);
-  const globPath = path.join(dest, repo._glob);
   const result = spawnSync(
     "node",
-    [CLI_PATH, "scan", globPath, "--repo", dest, "--format", "json"],
+    [CLI_PATH, "scan", repo._glob, "--repo", dest, "--format", "json"],
     { encoding: "utf-8", maxBuffer: 64 * 1024 * 1024 }
   );
   if (!result.stdout) {

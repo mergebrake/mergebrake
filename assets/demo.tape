@@ -36,7 +36,7 @@ Enter
 Sleep 2500ms
 
 # --- Run MergeBrake ---
-Type "npx mergebrake scan 'prisma/migrations/**/migration.sql' \\"
+Type "node ../../packages/cli/dist/cli.js scan 'prisma/migrations/**/migration.sql' \\"
 Enter
 Type "  --commits commits.txt"
 Enter

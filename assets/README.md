@@ -10,8 +10,8 @@ that drops `users.full_name`, the application code that still reads it through
 the `@map` alias, MergeBrake's `BLOCK` verdict, and the expand/contract
 recipe — in about 25 seconds.
 
-The GIF is committed so the README renders correctly on GitHub, npm, and any
-mirror. **Do not edit it by hand.** Regenerate from `demo.tape`:
+The GIF should be committed before embedding it inline in the README. **Do not
+edit it by hand.** Regenerate from `demo.tape`:
 
 ```bash
 # One-time install:
