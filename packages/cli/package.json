@@ -1,6 +1,6 @@
 {
   "name": "mergebrake",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Catch database-breaking PRs before merge by mapping schema changes to impacted app code.",
   "type": "module",
   "bin": {
@@ -18,8 +18,8 @@
     "start": "node dist/cli.js"
   },
   "dependencies": {
-    "mergebrake-core": "0.0.3",
-    "mergebrake-shared": "0.0.3",
+    "mergebrake-core": "0.0.4",
+    "mergebrake-shared": "0.0.4",
     "commander": "^12.1.0",
     "picocolors": "^1.0.1"
   },

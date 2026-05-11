@@ -1,6 +1,6 @@
 {
   "name": "mergebrake-shared",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Shared types and constants for MergeBrake packages",
   "type": "module",
   "main": "./dist/index.js",
