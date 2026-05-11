@@ -1,0 +1,124 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write       # create GitHub release + force-push the major mobile tag
+  id-token: write       # required for `npm publish --provenance`
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          # Use the bot's token so the major-tag force-push triggers no other workflows.
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: 'https://registry.npmjs.org'
+          # Sets up `.npmrc` with the token reference; the env wires the secret in.
+          always-auth: true
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Test
+        run: npm test
+
+      - name: Validate version matches tag
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF_NAME#v}"
+          declare -a FILES=(
+            "packages/shared/package.json"
+            "packages/core/package.json"
+            "packages/cli/package.json"
+          )
+          for f in "${FILES[@]}"; do
+            ver=$(node -e "process.stdout.write(require('./${f}').version)")
+            if [ "${ver}" != "${TAG}" ]; then
+              echo "::error::${f} version=${ver} does not match tag v${TAG}" >&2
+              echo "Run 'node scripts/release-prepare.mjs ${TAG}' locally, commit, and re-tag." >&2
+              exit 1
+            fi
+          done
+          # Workspace deps must reference the exact version, never "*".
+          for f in packages/core/package.json packages/cli/package.json; do
+            if grep -q '"@mergebrake/.*": "\*"' "${f}"; then
+              echo "::error::${f} still references a workspace dep with \"*\". Run release-prepare." >&2
+              exit 1
+            fi
+          done
+          echo "Tag and package versions match: v${TAG}"
+
+      - name: npm pack dry-run for each package
+        run: |
+          set -euo pipefail
+          for dir in packages/shared packages/core packages/cli; do
+            echo "::group::pack ${dir}"
+            (cd "${dir}" && npm pack --dry-run)
+            echo "::endgroup::"
+          done
+
+      - name: Publish @mergebrake/shared
+        working-directory: packages/shared
+        run: npm publish --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish @mergebrake/core
+        working-directory: packages/core
+        run: npm publish --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish mergebrake
+        working-directory: packages/cli
+        run: npm publish --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Move the major mobile tag (e.g. v0 -> v0.0.3)
+        run: |
+          set -euo pipefail
+          MAJOR=$(echo "${GITHUB_REF_NAME}" | cut -d. -f1)   # "v0", "v1", …
+          if [ "${MAJOR}" = "${GITHUB_REF_NAME}" ]; then
+            echo "Tag ${GITHUB_REF_NAME} has no patch component; skipping major-tag move."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -f "${MAJOR}" "${GITHUB_REF_NAME}"
+          git push origin "${MAJOR}" --force
+          echo "Moved ${MAJOR} -> ${GITHUB_REF_NAME}."
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          generate_release_notes: true
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
+
+  marketplace-notice:
+    runs-on: ubuntu-latest
+    needs: publish
+    if: success()
+    steps:
+      - name: Reminder
+        run: |
+          echo "::notice::npm packages published. To list the GitHub Action on the Marketplace, edit the GitHub release once and tick 'Publish this release to the GitHub Marketplace'."

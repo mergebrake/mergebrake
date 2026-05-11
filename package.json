@@ -11,7 +11,8 @@
     "test": "vitest run",
     "lint": "npm run lint --workspaces --if-present",
     "clean": "npm run clean --workspaces --if-present",
-    "og:build": "node website/scripts/build-og.mjs"
+    "og:build": "node website/scripts/build-og.mjs",
+    "release:prepare": "node scripts/release-prepare.mjs"
   },
   "devDependencies": {
     "@resvg/resvg-js": "^2.6.2",
