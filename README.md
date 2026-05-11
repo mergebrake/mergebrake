@@ -324,6 +324,30 @@ We ran MergeBrake against the full migration history of three popular Postgres
 case studies — including the riskiest single migrations with GitHub
 permalinks — live in [`examples/dogfood/README.md`](./examples/dogfood/README.md).
 
+## Founder Pilot
+
+The CLI and GitHub Action are MIT-licensed and free. The paid offer is not a
+paywall on the analyzer; it is hands-on help for teams that want a real answer
+on one production workflow.
+
+**DB PR Risk Audit + Drift Check - EUR 500 founder pilot**
+
+For 14 days we:
+
+- scan your full migration history and rank the PRs MergeBrake would have
+  blocked or escalated;
+- install MergeBrake in GitHub Actions and tune the rules for your Prisma or
+  Drizzle repo;
+- review Prisma migration-history drift when you can share a safe schema
+  snapshot or non-production database URL;
+- deliver a short report with the top risks, false positives, and the rollout
+  policy we recommend;
+- refund the pilot if the audit does not surface at least one useful migration
+  risk.
+
+Start with [`docs/founder-pilot.md`](./docs/founder-pilot.md) or email
+`hi@mergebrake.dev`.
+
 ## Status
 
 Early alpha. APIs and rule IDs may change while the schema impact engine is
