@@ -252,6 +252,8 @@ to a regex linter that covers the destructive family.
 | `destructive/drop-table` | critical | `DROP TABLE` and `DROP TABLE CASCADE` |
 | `destructive/rename-column` | high | `ALTER TABLE ... RENAME COLUMN` |
 | `destructive/truncate` | critical | `TRUNCATE TABLE` (and `CASCADE`) inside a migration |
+| `destructive/drop-index` | medium | `DROP INDEX` — silent query-plan regression risk |
+| `destructive/drop-constraint` | high | `ALTER TABLE ... DROP CONSTRAINT` — removes an invariant the app may rely on |
 
 ### Locking / downtime
 | Rule ID | Severity | Detects |
@@ -264,14 +266,18 @@ to a regex linter that covers the destructive family.
 | `locking/add-primary-key` | high | `ADD PRIMARY KEY` without `USING INDEX` |
 | `locking/add-check-without-not-valid` | medium | `ADD CONSTRAINT ... CHECK` validated inline |
 | `locking/set-not-null` | medium | `ALTER COLUMN ... SET NOT NULL` |
+| `locking/add-column-with-volatile-default` | high | `ADD COLUMN ... DEFAULT now()` / `gen_random_uuid()` / `nextval(...)` (full table rewrite) |
 
 ### Safety / data
 | Rule ID | Severity | Detects |
 |---|---|---|
-| `safety/set-default-volatile` | medium / high | `ALTER/ADD COLUMN ... DEFAULT now()` / `gen_random_uuid()` / generated defaults |
+| `safety/set-default-volatile` | medium | `ALTER COLUMN ... SET DEFAULT now()` (behavior change, no rewrite) |
 | `safety/update-without-where` | high | `UPDATE` with no `WHERE` (unbounded backfill in one transaction) |
 | `safety/alter-enum-rename-value` | high | `ALTER TYPE ... RENAME VALUE` (silent app-code break) |
 | `safety/alter-enum-add-value` | low | `ALTER TYPE ... ADD VALUE` (commit-in-transaction caveat) |
+| `safety/drop-not-null` | medium | `ALTER COLUMN ... DROP NOT NULL` (relaxes a contract) |
+| `safety/drop-default` | low | `ALTER COLUMN ... DROP DEFAULT` (changes INSERT contract) |
+| `safety/create-table-without-primary-key` | low | `CREATE TABLE` without a PRIMARY KEY |
 
 ### Deploy order
 | Rule ID | Severity | Detects |

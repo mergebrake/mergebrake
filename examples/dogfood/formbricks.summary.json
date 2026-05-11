@@ -3,37 +3,45 @@
   "commit": "cad10b8810e0017d1abdce5b15fbaa65f36dacb4",
   "tool": "mergebrake@0.0.1",
   "scannedFiles": 141,
-  "findings": 249,
+  "findings": 314,
   "verdict": "BLOCK",
-  "riskScore": 5368,
+  "riskScore": 6051,
   "bySeverity": {
-    "high": 142,
-    "medium": 56,
+    "medium": 89,
+    "high": 161,
     "critical": 41,
-    "low": 10
+    "low": 23
   },
   "byRule": {
     "locking/create-index-non-concurrent": 90,
     "locking/add-foreign-key-without-not-valid": 68,
     "destructive/drop-column": 32,
+    "destructive/drop-index": 24,
     "destructive/rename-column": 22,
+    "destructive/drop-constraint": 19,
+    "safety/drop-default": 12,
     "safety/alter-enum-add-value": 10,
+    "safety/drop-not-null": 9,
     "locking/alter-column-type": 9,
     "destructive/drop-table": 9,
     "safety/update-without-where": 4,
     "locking/add-not-null-without-default": 2,
     "locking/set-not-null": 2,
-    "locking/add-primary-key": 1
+    "locking/add-primary-key": 1,
+    "safety/create-table-without-primary-key": 1
   },
   "topRiskiest": [
     {
       "file": "packages/database/migration/20250911192630_remove_deprecated_fields_and_tables/migration.sql",
-      "score": 720,
-      "findings": 15,
+      "score": 851,
+      "findings": 23,
       "rules": [
         "destructive/drop-column",
+        "destructive/drop-constraint",
+        "destructive/drop-index",
         "destructive/drop-table",
-        "locking/alter-column-type"
+        "locking/alter-column-type",
+        "safety/drop-default"
       ]
     },
     {
@@ -47,38 +55,45 @@
     },
     {
       "file": "packages/database/migration/20241010133706_xm_user_identification/migration.sql",
-      "score": 316,
-      "findings": 14,
+      "score": 359,
+      "findings": 20,
       "rules": [
         "destructive/drop-column",
+        "destructive/drop-index",
         "destructive/rename-column",
         "locking/create-index-non-concurrent",
         "locking/set-not-null",
+        "safety/drop-default",
+        "safety/drop-not-null",
         "safety/update-without-where"
       ]
     },
     {
       "file": "packages/database/migration/20231109052945_restructure_session_action_person/migration.sql",
-      "score": 236,
-      "findings": 10,
+      "score": 299,
+      "findings": 14,
       "rules": [
+        "destructive/drop-constraint",
         "destructive/drop-table",
         "destructive/rename-column",
         "locking/add-foreign-key-without-not-valid",
         "locking/add-not-null-without-default",
         "locking/alter-column-type",
-        "locking/create-index-non-concurrent"
+        "locking/create-index-non-concurrent",
+        "safety/drop-default"
       ]
     },
     {
       "file": "packages/database/migration/20241107161932_add_teams/migration.sql",
-      "score": 226,
-      "findings": 11,
+      "score": 245,
+      "findings": 14,
       "rules": [
         "destructive/drop-column",
         "destructive/rename-column",
         "locking/add-foreign-key-without-not-valid",
-        "locking/create-index-non-concurrent"
+        "locking/create-index-non-concurrent",
+        "safety/drop-default",
+        "safety/drop-not-null"
       ]
     },
     {
@@ -107,21 +122,23 @@
       ]
     },
     {
-      "file": "packages/database/migration/20250904145727_removes_cron_and_survey_scheduling/migration.sql",
-      "score": 120,
-      "findings": 3,
+      "file": "packages/database/migration/20250327043931_api_key_new_to_api_key/migration.sql",
+      "score": 130,
+      "findings": 5,
       "rules": [
-        "destructive/drop-column",
-        "locking/alter-column-type"
+        "destructive/drop-constraint",
+        "destructive/drop-table",
+        "locking/add-foreign-key-without-not-valid"
       ]
     },
     {
-      "file": "packages/database/migration/20250326083401_add_api_keys_to_organization/migration.sql",
-      "score": 116,
-      "findings": 7,
+      "file": "packages/database/migration/20250904145727_removes_cron_and_survey_scheduling/migration.sql",
+      "score": 123,
+      "findings": 4,
       "rules": [
-        "locking/add-foreign-key-without-not-valid",
-        "locking/create-index-non-concurrent"
+        "destructive/drop-column",
+        "locking/alter-column-type",
+        "safety/drop-default"
       ]
     }
   ]

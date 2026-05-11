@@ -3,38 +3,59 @@
   "commit": "a5ba4065305e9e4f7bd97f04b763ff1ff8f1b9bb",
   "tool": "mergebrake@0.0.1",
   "scannedFiles": 768,
-  "findings": 1243,
+  "findings": 1519,
   "verdict": "BLOCK",
-  "riskScore": 30698,
+  "riskScore": 34954,
   "bySeverity": {
-    "high": 819,
-    "medium": 90,
-    "critical": 268,
-    "low": 66
+    "high": 998,
+    "low": 86,
+    "medium": 167,
+    "critical": 268
   },
   "byRule": {
     "locking/add-foreign-key-without-not-valid": 442,
     "locking/create-index-non-concurrent": 286,
+    "destructive/drop-constraint": 179,
     "destructive/drop-column": 172,
     "locking/add-not-null-without-default": 134,
     "destructive/drop-table": 96,
     "safety/alter-enum-add-value": 66,
+    "destructive/drop-index": 51,
+    "safety/drop-not-null": 26,
     "locking/alter-column-type": 17,
     "locking/set-not-null": 16,
+    "safety/create-table-without-primary-key": 11,
+    "safety/drop-default": 9,
     "safety/update-without-where": 9,
     "destructive/rename-column": 5
   },
   "topRiskiest": [
     {
       "file": "internal-packages/database/prisma/migrations/20230512085413_schema_redesign_for_new_system/migration.sql",
-      "score": 3030,
-      "findings": 84,
+      "score": 4426,
+      "findings": 155,
       "rules": [
         "destructive/drop-column",
+        "destructive/drop-constraint",
+        "destructive/drop-index",
         "destructive/drop-table",
         "locking/add-foreign-key-without-not-valid",
         "locking/add-not-null-without-default",
         "locking/create-index-non-concurrent"
+      ]
+    },
+    {
+      "file": "internal-packages/database/prisma/migrations/20230615152126_revamp_integration_schema/migration.sql",
+      "score": 1121,
+      "findings": 44,
+      "rules": [
+        "destructive/drop-column",
+        "destructive/drop-constraint",
+        "destructive/drop-table",
+        "locking/add-foreign-key-without-not-valid",
+        "locking/add-not-null-without-default",
+        "locking/create-index-non-concurrent",
+        "safety/create-table-without-primary-key"
       ]
     },
     {
@@ -46,11 +67,13 @@
       ]
     },
     {
-      "file": "internal-packages/database/prisma/migrations/20230615152126_revamp_integration_schema/migration.sql",
-      "score": 838,
-      "findings": 29,
+      "file": "internal-packages/database/prisma/migrations/20230426150713_add_support_for_projects/migration.sql",
+      "score": 836,
+      "findings": 40,
       "rules": [
         "destructive/drop-column",
+        "destructive/drop-constraint",
+        "destructive/drop-index",
         "destructive/drop-table",
         "locking/add-foreign-key-without-not-valid",
         "locking/add-not-null-without-default",
@@ -59,41 +82,35 @@
     },
     {
       "file": "internal-packages/database/prisma/migrations/20250103152909_add_run_engine_v2/migration.sql",
-      "score": 712,
-      "findings": 38,
+      "score": 715,
+      "findings": 39,
       "rules": [
         "locking/add-foreign-key-without-not-valid",
-        "locking/create-index-non-concurrent"
-      ]
-    },
-    {
-      "file": "internal-packages/database/prisma/migrations/20230426150713_add_support_for_projects/migration.sql",
-      "score": 680,
-      "findings": 31,
-      "rules": [
-        "destructive/drop-column",
-        "destructive/drop-table",
-        "locking/add-foreign-key-without-not-valid",
-        "locking/add-not-null-without-default",
-        "locking/create-index-non-concurrent"
+        "locking/create-index-non-concurrent",
+        "safety/create-table-without-primary-key"
       ]
     },
     {
       "file": "internal-packages/database/prisma/migrations/20240123193905_restructure_task_runs_with_attempts/migration.sql",
-      "score": 658,
-      "findings": 20,
+      "score": 709,
+      "findings": 24,
       "rules": [
         "destructive/drop-column",
+        "destructive/drop-constraint",
+        "destructive/drop-index",
         "locking/add-foreign-key-without-not-valid",
-        "locking/create-index-non-concurrent"
+        "locking/create-index-non-concurrent",
+        "safety/create-table-without-primary-key"
       ]
     },
     {
       "file": "internal-packages/database/prisma/migrations/20230515151445_add_trigger_sources/migration.sql",
-      "score": 578,
-      "findings": 19,
+      "score": 686,
+      "findings": 25,
       "rules": [
         "destructive/drop-column",
+        "destructive/drop-constraint",
+        "destructive/drop-index",
         "locking/add-foreign-key-without-not-valid",
         "locking/add-not-null-without-default",
         "locking/create-index-non-concurrent",
@@ -102,32 +119,36 @@
     },
     {
       "file": "internal-packages/database/prisma/migrations/20221223132913_more_pub_sub_refactoring/migration.sql",
-      "score": 490,
-      "findings": 14,
+      "score": 530,
+      "findings": 16,
       "rules": [
         "destructive/drop-column",
+        "destructive/drop-constraint",
         "destructive/drop-table",
         "locking/add-foreign-key-without-not-valid",
         "locking/add-not-null-without-default"
       ]
     },
     {
-      "file": "internal-packages/database/prisma/migrations/20240208124114_changes_to_the_task_event_schema/migration.sql",
-      "score": 370,
-      "findings": 8,
+      "file": "internal-packages/database/prisma/migrations/20221222153652_refactor_schema_generic_pub_sub_model/migration.sql",
+      "score": 480,
+      "findings": 18,
       "rules": [
         "destructive/drop-column",
+        "destructive/drop-constraint",
+        "destructive/drop-table",
+        "locking/add-foreign-key-without-not-valid",
         "locking/add-not-null-without-default"
       ]
     },
     {
-      "file": "internal-packages/database/prisma/migrations/20230419140902_apiconnection_secrets/migration.sql",
-      "score": 350,
-      "findings": 10,
+      "file": "internal-packages/database/prisma/migrations/20230428092422_rename_api_connection_models/migration.sql",
+      "score": 420,
+      "findings": 18,
       "rules": [
-        "destructive/drop-column",
+        "destructive/drop-constraint",
+        "destructive/drop-table",
         "locking/add-foreign-key-without-not-valid",
-        "locking/add-not-null-without-default",
         "locking/create-index-non-concurrent"
       ]
     }

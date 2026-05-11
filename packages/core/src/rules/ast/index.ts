@@ -17,6 +17,12 @@ import { astSetDefaultVolatile } from "./safety-set-default-volatile.js";
 import { astTruncate } from "./destructive-truncate.js";
 import { astUpdateWithoutWhere } from "./safety-update-without-where.js";
 import { astAlterEnum } from "./safety-alter-enum-value.js";
+import { astDropIndex } from "./destructive-drop-index.js";
+import { astDropConstraint } from "./destructive-drop-constraint.js";
+import { astDropNotNull } from "./safety-drop-not-null.js";
+import { astDropDefault } from "./safety-drop-default.js";
+import { astCreateTableWithoutPk } from "./safety-create-table-without-pk.js";
+import { astAddColumnVolatileDefault } from "./locking-add-column-volatile-default.js";
 
 export interface AstRuleContext {
   ormStack: OrmStack;
@@ -46,6 +52,13 @@ export const astRules: AstRule[] = [
   astTruncate,
   astUpdateWithoutWhere,
   astAlterEnum,
+  // 6 new rules (v0.0.2)
+  astDropIndex,
+  astDropConstraint,
+  astDropNotNull,
+  astDropDefault,
+  astCreateTableWithoutPk,
+  astAddColumnVolatileDefault,
 ];
 
 export function runAstRules(input: {
