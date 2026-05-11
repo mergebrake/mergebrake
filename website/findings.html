@@ -1,0 +1,532 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Hall of Findings — MergeBrake</title>
+    <meta
+      name="description"
+      content="2,339 risky patterns across 1,066 real Postgres + Prisma migrations. The full breakdown of what MergeBrake catches that linters and AI reviewers miss."
+    />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f172a'/%3E%3Cpath d='M14 38 H50 M14 30 H50 M32 14 L32 50' stroke='%23f97316' stroke-width='5' stroke-linecap='round'/%3E%3C/svg%3E" />
+    <meta property="og:title" content="Hall of Findings — 2,339 risky migration patterns" />
+    <meta property="og:description" content="A public catalog of what MergeBrake catches: real findings from 1,066 production-grade Postgres migrations." />
+    <meta property="og:url" content="https://mergebrake.dev/findings.html" />
+    <meta property="og:image" content="https://mergebrake.dev/og.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ["InterVariable","Inter","ui-sans-serif","system-ui","sans-serif"],
+              mono: ["JetBrains Mono","Fira Code","ui-monospace","SFMono-Regular","Menlo","monospace"],
+            },
+            colors: {
+              brake: { 50:"#fff7ed", 400:"#fb923c", 500:"#f97316", 600:"#ea580c" },
+            },
+          },
+        },
+      };
+    </script>
+    <link rel="preconnect" href="https://rsms.me/" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://rsms.me/inter/inter.css" crossorigin="anonymous" />
+    <style>
+      :root { color-scheme: dark; }
+      body {
+        font-feature-settings: "cv02","cv03","cv04","cv11";
+        background:
+          radial-gradient(circle at 12% -10%, rgba(249,115,22,0.22), transparent 55%),
+          radial-gradient(circle at 90% 0%, rgba(56,189,248,0.18), transparent 50%),
+          #0b1020;
+      }
+      .grid-bg {
+        background-image:
+          linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+        background-size: 32px 32px;
+      }
+      .bar { transition: width 600ms ease-out; }
+    </style>
+  </head>
+  <body class="text-slate-100 antialiased">
+    <header class="relative">
+      <div class="absolute inset-0 grid-bg opacity-30"></div>
+      <div class="relative mx-auto flex max-w-7xl items-center justify-between px-6 py-6">
+        <a href="/" class="flex items-center gap-2 font-semibold tracking-tight">
+          <svg viewBox="0 0 64 64" class="h-7 w-7" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <rect width="64" height="64" rx="14" fill="#0f172a" />
+            <path d="M14 38 H50 M14 30 H50 M32 14 L32 50" stroke="#f97316" stroke-width="5" stroke-linecap="round" />
+          </svg>
+          <span class="text-lg">MergeBrake</span>
+        </a>
+        <nav class="hidden gap-8 text-sm text-slate-300 md:flex">
+          <a class="hover:text-white" href="/#how-it-works">How it works</a>
+          <a class="hover:text-white" href="/#sample">Sample report</a>
+          <a class="hover:text-white text-white" href="/findings.html">Findings</a>
+          <a class="hover:text-white" href="/#install">Install</a>
+          <a class="hover:text-white" href="/#faq">FAQ</a>
+        </nav>
+        <a class="hidden rounded-full border border-slate-700 px-4 py-2 text-sm font-medium text-slate-100 transition hover:border-brake-500 hover:text-white md:inline-block"
+           href="https://github.com/mergebrake/mergebrake">GitHub</a>
+      </div>
+    </header>
+
+    <main>
+      <!-- HERO -->
+      <section class="relative overflow-hidden">
+        <div class="absolute inset-0 grid-bg opacity-30"></div>
+        <div class="relative mx-auto max-w-5xl px-6 py-20 md:py-24">
+          <div class="inline-flex items-center gap-2 rounded-full border border-slate-700 bg-slate-900/60 px-3 py-1 text-xs text-slate-300">
+            <span class="inline-block h-2 w-2 rounded-full bg-brake-500"></span>
+            Public catalog · regenerated on every release
+          </div>
+          <h1 class="mt-6 text-4xl font-semibold tracking-tight md:text-5xl lg:text-6xl">
+            Hall of <span class="text-brake-400">Findings</span>.
+          </h1>
+          <p class="mt-6 max-w-3xl text-lg leading-relaxed text-slate-300">
+            We ran MergeBrake on the full migration history of three popular
+            Postgres + Prisma open-source projects.
+            <strong class="text-white">2,339 risky patterns</strong> across
+            <strong class="text-white">1,066 migrations</strong>. This is the
+            catalog of what MergeBrake catches — every finding here would have
+            been a sticky PR comment, with the exact application-code references
+            it could have broken.
+          </p>
+          <p class="mt-4 max-w-3xl text-sm leading-relaxed text-slate-400">
+            None of these projects are "doing migrations wrong." They ship at
+            the speed real teams ship. These are the kind of pre-merge warnings
+            their reviewers would have seen with MergeBrake wired into their
+            workflow.
+          </p>
+        </div>
+      </section>
+
+      <!-- AGGREGATES -->
+      <section class="border-t border-slate-800/60 bg-slate-950/40 py-16">
+        <div class="mx-auto max-w-6xl px-6">
+          <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            <div class="rounded-2xl border border-rose-500/30 bg-rose-500/5 p-6">
+              <div class="text-4xl font-semibold text-rose-300">360</div>
+              <div class="mt-1 text-sm uppercase tracking-wider text-rose-200/70">Critical</div>
+              <div class="mt-2 text-xs text-slate-400">Data loss or table-wide downtime risk.</div>
+            </div>
+            <div class="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-6">
+              <div class="text-4xl font-semibold text-amber-300">1,434</div>
+              <div class="mt-1 text-sm uppercase tracking-wider text-amber-200/70">High</div>
+              <div class="mt-2 text-xs text-slate-400">App-level breakage or long blocking locks.</div>
+            </div>
+            <div class="rounded-2xl border border-sky-500/30 bg-sky-500/5 p-6">
+              <div class="text-4xl font-semibold text-sky-300">388</div>
+              <div class="mt-1 text-sm uppercase tracking-wider text-sky-200/70">Medium</div>
+              <div class="mt-2 text-xs text-slate-400">Query-plan regression or contract relaxation.</div>
+            </div>
+            <div class="rounded-2xl border border-slate-700/60 bg-slate-900/40 p-6">
+              <div class="text-4xl font-semibold text-slate-300">157</div>
+              <div class="mt-1 text-sm uppercase tracking-wider text-slate-400">Low</div>
+              <div class="mt-2 text-xs text-slate-400">Style or convention issues worth flagging.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- RULE FREQUENCY -->
+      <section class="border-t border-slate-800/60 py-20">
+        <div class="mx-auto max-w-5xl px-6">
+          <h2 class="text-3xl font-semibold tracking-tight md:text-4xl">
+            What gets flagged most
+          </h2>
+          <p class="mt-4 max-w-3xl text-lg text-slate-300">
+            The default emitter of every modern ORM produces locking patterns
+            most teams treat as "fine until production says otherwise." The two
+            patterns at the top of this chart account for
+            <strong class="text-white">48%</strong> of all findings.
+          </p>
+
+          <div class="mt-10 space-y-3 font-mono text-sm">
+            <!-- 624 / 624 = 100% -->
+            <div>
+              <div class="flex items-baseline justify-between">
+                <a href="https://github.com/mergebrake/mergebrake#locking--downtime" class="text-slate-200 hover:text-brake-400">locking/add-foreign-key-without-not-valid</a>
+                <span class="text-amber-300">624</span>
+              </div>
+              <div class="mt-1 h-2 rounded-full bg-slate-800/60">
+                <div class="bar h-2 rounded-full bg-amber-400/70" style="width: 100%"></div>
+              </div>
+            </div>
+            <!-- 499 / 624 = 80% -->
+            <div>
+              <div class="flex items-baseline justify-between">
+                <a href="https://github.com/mergebrake/mergebrake#locking--downtime" class="text-slate-200 hover:text-brake-400">locking/create-index-non-concurrent</a>
+                <span class="text-amber-300">499</span>
+              </div>
+              <div class="mt-1 h-2 rounded-full bg-slate-800/60">
+                <div class="bar h-2 rounded-full bg-amber-400/70" style="width: 80%"></div>
+              </div>
+            </div>
+            <!-- 258 / 624 = 41% -->
+            <div>
+              <div class="flex items-baseline justify-between">
+                <a href="https://github.com/mergebrake/mergebrake#destructive" class="text-slate-200 hover:text-brake-400">destructive/drop-constraint</a>
+                <span class="text-rose-300">258</span>
+              </div>
+              <div class="mt-1 h-2 rounded-full bg-slate-800/60">
+                <div class="bar h-2 rounded-full bg-rose-400/70" style="width: 41%"></div>
+              </div>
+            </div>
+            <!-- 244 / 624 = 39% -->
+            <div>
+              <div class="flex items-baseline justify-between">
+                <a href="https://github.com/mergebrake/mergebrake#destructive" class="text-slate-200 hover:text-brake-400">destructive/drop-column</a>
+                <span class="text-rose-300">244</span>
+              </div>
+              <div class="mt-1 h-2 rounded-full bg-slate-800/60">
+                <div class="bar h-2 rounded-full bg-rose-400/70" style="width: 39%"></div>
+              </div>
+            </div>
+            <!-- 146 / 624 = 23% -->
+            <div>
+              <div class="flex items-baseline justify-between">
+                <a href="https://github.com/mergebrake/mergebrake#locking--downtime" class="text-slate-200 hover:text-brake-400">locking/add-not-null-without-default</a>
+                <span class="text-amber-300">146</span>
+              </div>
+              <div class="mt-1 h-2 rounded-full bg-slate-800/60">
+                <div class="bar h-2 rounded-full bg-amber-400/70" style="width: 23%"></div>
+              </div>
+            </div>
+            <div>
+              <div class="flex items-baseline justify-between">
+                <a href="https://github.com/mergebrake/mergebrake#destructive" class="text-slate-200 hover:text-brake-400">destructive/drop-table</a>
+                <span class="text-rose-300">116</span>
+              </div>
+              <div class="mt-1 h-2 rounded-full bg-slate-800/60">
+                <div class="bar h-2 rounded-full bg-rose-400/70" style="width: 19%"></div>
+              </div>
+            </div>
+            <div>
+              <div class="flex items-baseline justify-between">
+                <a href="https://github.com/mergebrake/mergebrake#safety--data" class="text-slate-200 hover:text-brake-400">safety/alter-enum-add-value</a>
+                <span class="text-sky-300">110</span>
+              </div>
+              <div class="mt-1 h-2 rounded-full bg-slate-800/60">
+                <div class="bar h-2 rounded-full bg-sky-400/70" style="width: 18%"></div>
+              </div>
+            </div>
+            <div>
+              <div class="flex items-baseline justify-between">
+                <a href="https://github.com/mergebrake/mergebrake#destructive" class="text-slate-200 hover:text-brake-400">destructive/drop-index</a>
+                <span class="text-rose-300">98</span>
+              </div>
+              <div class="mt-1 h-2 rounded-full bg-slate-800/60">
+                <div class="bar h-2 rounded-full bg-rose-400/70" style="width: 16%"></div>
+              </div>
+            </div>
+            <div>
+              <div class="flex items-baseline justify-between">
+                <a href="https://github.com/mergebrake/mergebrake#safety--data" class="text-slate-200 hover:text-brake-400">safety/drop-not-null</a>
+                <span class="text-sky-300">53</span>
+              </div>
+              <div class="mt-1 h-2 rounded-full bg-slate-800/60">
+                <div class="bar h-2 rounded-full bg-sky-400/70" style="width: 9%"></div>
+              </div>
+            </div>
+            <div>
+              <div class="flex items-baseline justify-between">
+                <a href="https://github.com/mergebrake/mergebrake#locking--downtime" class="text-slate-200 hover:text-brake-400">locking/set-not-null</a>
+                <span class="text-sky-300">52</span>
+              </div>
+              <div class="mt-1 h-2 rounded-full bg-slate-800/60">
+                <div class="bar h-2 rounded-full bg-sky-400/70" style="width: 8%"></div>
+              </div>
+            </div>
+            <div>
+              <div class="flex items-baseline justify-between">
+                <a href="https://github.com/mergebrake/mergebrake#locking--downtime" class="text-slate-200 hover:text-brake-400">locking/alter-column-type</a>
+                <span class="text-amber-300">35</span>
+              </div>
+              <div class="mt-1 h-2 rounded-full bg-slate-800/60">
+                <div class="bar h-2 rounded-full bg-amber-400/70" style="width: 6%"></div>
+              </div>
+            </div>
+            <div>
+              <div class="flex items-baseline justify-between">
+                <a href="https://github.com/mergebrake/mergebrake#safety--data" class="text-slate-200 hover:text-brake-400">safety/drop-default</a>
+                <span class="text-sky-300">34</span>
+              </div>
+              <div class="mt-1 h-2 rounded-full bg-slate-800/60">
+                <div class="bar h-2 rounded-full bg-sky-400/70" style="width: 5%"></div>
+              </div>
+            </div>
+            <div>
+              <div class="flex items-baseline justify-between">
+                <a href="https://github.com/mergebrake/mergebrake#destructive" class="text-slate-200 hover:text-brake-400">destructive/rename-column</a>
+                <span class="text-amber-300">27</span>
+              </div>
+              <div class="mt-1 h-2 rounded-full bg-slate-800/60">
+                <div class="bar h-2 rounded-full bg-amber-400/70" style="width: 4%"></div>
+              </div>
+            </div>
+            <div>
+              <div class="flex items-baseline justify-between">
+                <a href="https://github.com/mergebrake/mergebrake#safety--data" class="text-slate-200 hover:text-brake-400">safety/update-without-where</a>
+                <span class="text-amber-300">19</span>
+              </div>
+              <div class="mt-1 h-2 rounded-full bg-slate-800/60">
+                <div class="bar h-2 rounded-full bg-amber-400/70" style="width: 3%"></div>
+              </div>
+            </div>
+            <div>
+              <div class="flex items-baseline justify-between">
+                <a href="https://github.com/mergebrake/mergebrake#safety--data" class="text-slate-200 hover:text-brake-400">safety/create-table-without-primary-key</a>
+                <span class="text-slate-400">13</span>
+              </div>
+              <div class="mt-1 h-2 rounded-full bg-slate-800/60">
+                <div class="bar h-2 rounded-full bg-slate-500/70" style="width: 2%"></div>
+              </div>
+            </div>
+            <div>
+              <div class="flex items-baseline justify-between">
+                <a href="https://github.com/mergebrake/mergebrake#locking--downtime" class="text-slate-200 hover:text-brake-400">locking/add-primary-key</a>
+                <span class="text-amber-300">6</span>
+              </div>
+              <div class="mt-1 h-2 rounded-full bg-slate-800/60">
+                <div class="bar h-2 rounded-full bg-amber-400/70" style="width: 1%"></div>
+              </div>
+            </div>
+            <div>
+              <div class="flex items-baseline justify-between">
+                <a href="https://github.com/mergebrake/mergebrake#locking--downtime" class="text-slate-200 hover:text-brake-400">locking/add-check-without-not-valid</a>
+                <span class="text-sky-300">3</span>
+              </div>
+              <div class="mt-1 h-2 rounded-full bg-slate-800/60">
+                <div class="bar h-2 rounded-full bg-sky-400/70" style="width: 1%"></div>
+              </div>
+            </div>
+            <div>
+              <div class="flex items-baseline justify-between">
+                <a href="https://github.com/mergebrake/mergebrake#safety--data" class="text-slate-200 hover:text-brake-400">safety/set-default-volatile</a>
+                <span class="text-sky-300">2</span>
+              </div>
+              <div class="mt-1 h-2 rounded-full bg-slate-800/60">
+                <div class="bar h-2 rounded-full bg-sky-400/70" style="width: 1%"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- REAL EXAMPLES -->
+      <section class="border-t border-slate-800/60 bg-slate-950/40 py-20">
+        <div class="mx-auto max-w-5xl px-6">
+          <h2 class="text-3xl font-semibold tracking-tight md:text-4xl">
+            The three riskiest migrations in the dataset
+          </h2>
+          <p class="mt-4 max-w-3xl text-lg text-slate-300">
+            Each of these is a single PR that drops or rewrites enough structure
+            that a careful reviewer would want a rollout plan. Click through to
+            the actual SQL on GitHub — it's all public.
+          </p>
+
+          <div class="mt-12 space-y-8">
+
+            <!-- trigger.dev schema_redesign -->
+            <article class="rounded-2xl border border-rose-500/30 bg-slate-900/40 p-7">
+              <div class="flex flex-wrap items-baseline justify-between gap-3">
+                <div>
+                  <div class="text-xs uppercase tracking-wider text-rose-300">Risk score 4,426 · 268 findings</div>
+                  <h3 class="mt-1 text-xl font-semibold text-white">trigger.dev — <span class="text-brake-400">schema redesign for new system</span></h3>
+                </div>
+                <a class="text-sm text-brake-400 hover:underline"
+                   href="https://github.com/triggerdotdev/trigger.dev/blob/a5ba4065305e9e4f7bd97f04b763ff1ff8f1b9bb/internal-packages/database/prisma/migrations/20230512085413_schema_redesign_for_new_system/migration.sql"
+                   target="_blank" rel="noopener">View on GitHub →</a>
+              </div>
+              <p class="mt-4 text-slate-300">
+                A single migration that drops 30+ tables, 18 columns, and rebuilds
+                most of the application's data model in one transaction. Several
+                production deploys' worth of expand/contract sequencing
+                collapsed into one PR. The riskiest single SQL file in the
+                entire dogfood corpus.
+              </p>
+              <div class="mt-4 flex flex-wrap gap-2 text-xs">
+                <span class="rounded bg-rose-500/15 px-2 py-1 text-rose-200">destructive/drop-table</span>
+                <span class="rounded bg-rose-500/15 px-2 py-1 text-rose-200">destructive/drop-column</span>
+                <span class="rounded bg-rose-500/15 px-2 py-1 text-rose-200">destructive/drop-constraint</span>
+                <span class="rounded bg-amber-500/15 px-2 py-1 text-amber-200">locking/add-foreign-key-without-not-valid</span>
+                <span class="rounded bg-amber-500/15 px-2 py-1 text-amber-200">locking/create-index-non-concurrent</span>
+              </div>
+              <p class="mt-4 text-sm text-slate-400">
+                <strong class="text-slate-200">What MergeBrake would have done:</strong>
+                BLOCK verdict, force a split into expand-only and contract-only
+                PRs, and surface every Prisma model field that would silently
+                disappear from the TypeScript types post-merge.
+              </p>
+            </article>
+
+            <!-- documenso add_organisations -->
+            <article class="rounded-2xl border border-rose-500/30 bg-slate-900/40 p-7">
+              <div class="flex flex-wrap items-baseline justify-between gap-3">
+                <div>
+                  <div class="text-xs uppercase tracking-wider text-rose-300">Risk score 2,019 · 101 findings</div>
+                  <h3 class="mt-1 text-xl font-semibold text-white">documenso — <span class="text-brake-400">add organisations</span></h3>
+                </div>
+                <a class="text-sm text-brake-400 hover:underline"
+                   href="https://github.com/documenso/documenso/blob/87315adb0f51619fdd2ef6b5963dcc54d78b3c6e/packages/prisma/migrations/20250522054050_add_organisations/migration.sql"
+                   target="_blank" rel="noopener">View on GitHub →</a>
+              </div>
+              <p class="mt-4 text-slate-300">
+                "Add organisations" sounds expand-only. In practice it drops
+                pre-existing columns, restructures the team/user relationship,
+                and adds dozens of foreign keys validated inline. On a busy
+                Postgres, the inline FK validation alone can block writes for
+                seconds-to-minutes on the referenced tables.
+              </p>
+              <div class="mt-4 flex flex-wrap gap-2 text-xs">
+                <span class="rounded bg-rose-500/15 px-2 py-1 text-rose-200">destructive/drop-column</span>
+                <span class="rounded bg-rose-500/15 px-2 py-1 text-rose-200">destructive/drop-table</span>
+                <span class="rounded bg-rose-500/15 px-2 py-1 text-rose-200">destructive/drop-constraint</span>
+                <span class="rounded bg-amber-500/15 px-2 py-1 text-amber-200">locking/add-foreign-key-without-not-valid</span>
+                <span class="rounded bg-amber-500/15 px-2 py-1 text-amber-200">locking/add-primary-key</span>
+              </div>
+              <p class="mt-4 text-sm text-slate-400">
+                <strong class="text-slate-200">What MergeBrake would have done:</strong>
+                BLOCK verdict, suggest rewriting the FK additions with
+                <code class="text-brake-300">ADD CONSTRAINT ... NOT VALID</code>
+                + a follow-up <code class="text-brake-300">VALIDATE CONSTRAINT</code>,
+                and produce app-code impact for the dropped columns.
+              </p>
+            </article>
+
+            <!-- formbricks remove_deprecated -->
+            <article class="rounded-2xl border border-rose-500/30 bg-slate-900/40 p-7">
+              <div class="flex flex-wrap items-baseline justify-between gap-3">
+                <div>
+                  <div class="text-xs uppercase tracking-wider text-rose-300">Risk score 1,300+ · contract-without-expand</div>
+                  <h3 class="mt-1 text-xl font-semibold text-white">formbricks — <span class="text-brake-400">remove deprecated fields and tables</span></h3>
+                </div>
+                <a class="text-sm text-brake-400 hover:underline"
+                   href="https://github.com/formbricks/formbricks/blob/cad10b8810e0017d1abdce5b15fbaa65f36dacb4/packages/database/migration/20250911192630_remove_deprecated_fields_and_tables/migration.sql"
+                   target="_blank" rel="noopener">View on GitHub →</a>
+              </div>
+              <p class="mt-4 text-slate-300">
+                Textbook contract-without-expand: a cleanup PR that drops 12
+                columns, 3 tables, removes enum values, and ships in a single
+                deploy. The risk isn't whether the SQL is correct — it is whether
+                every replica, background job, and stale browser tab has already
+                stopped reading these fields. With Prisma's
+                <code class="text-brake-300">@map</code> indirection, a plain
+                grep would miss several of the affected app references.
+              </p>
+              <div class="mt-4 flex flex-wrap gap-2 text-xs">
+                <span class="rounded bg-rose-500/15 px-2 py-1 text-rose-200">destructive/drop-column</span>
+                <span class="rounded bg-rose-500/15 px-2 py-1 text-rose-200">destructive/drop-table</span>
+                <span class="rounded bg-amber-500/15 px-2 py-1 text-amber-200">destructive/rename-column</span>
+                <span class="rounded bg-sky-500/15 px-2 py-1 text-sky-200">safety/alter-enum-add-value</span>
+              </div>
+              <p class="mt-4 text-sm text-slate-400">
+                <strong class="text-slate-200">What MergeBrake would have done:</strong>
+                BLOCK verdict, list every Prisma <code class="text-brake-300">@map</code>-resolved
+                app reference still in the base branch, and suggest splitting
+                the cleanup into expand (remove app references) → wait one
+                release → contract (drop columns) PRs.
+              </p>
+            </article>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- METHODOLOGY -->
+      <section class="border-t border-slate-800/60 py-20">
+        <div class="mx-auto max-w-4xl px-6">
+          <h2 class="text-3xl font-semibold tracking-tight md:text-4xl">
+            How we ran this
+          </h2>
+          <ul class="mt-8 space-y-4 text-slate-300">
+            <li class="flex gap-3">
+              <span class="mt-1 inline-block h-2 w-2 flex-none rounded-full bg-brake-500"></span>
+              <span>
+                Three public Postgres + Prisma projects, all OSI-licensed:
+                <a class="text-brake-400 hover:underline" href="https://github.com/documenso/documenso">documenso</a>,
+                <a class="text-brake-400 hover:underline" href="https://github.com/triggerdotdev/trigger.dev">trigger.dev</a>,
+                <a class="text-brake-400 hover:underline" href="https://github.com/formbricks/formbricks">formbricks</a>.
+              </span>
+            </li>
+            <li class="flex gap-3">
+              <span class="mt-1 inline-block h-2 w-2 flex-none rounded-full bg-brake-500"></span>
+              <span>
+                Sparse-checkout pinned to a specific commit per repo so the
+                numbers are reproducible. Commit hashes are in the
+                <a class="text-brake-400 hover:underline" href="https://github.com/mergebrake/mergebrake/tree/main/examples/dogfood">dogfood folder</a>.
+              </span>
+            </li>
+            <li class="flex gap-3">
+              <span class="mt-1 inline-block h-2 w-2 flex-none rounded-full bg-brake-500"></span>
+              <span>
+                Default ruleset, no
+                <code class="font-mono text-brake-300">.mergebrake.yml</code>,
+                no path filters. The same configuration any team gets on day 1.
+              </span>
+            </li>
+            <li class="flex gap-3">
+              <span class="mt-1 inline-block h-2 w-2 flex-none rounded-full bg-brake-500"></span>
+              <span>
+                Findings are not bugs in the projects. Each one is a
+                <strong class="text-white">point in time</strong> where, on a
+                modern PR with the same migration, a reviewer would want a
+                conversation before merging.
+              </span>
+            </li>
+            <li class="flex gap-3">
+              <span class="mt-1 inline-block h-2 w-2 flex-none rounded-full bg-brake-500"></span>
+              <span>
+                MergeBrake never connected to a database. Everything you see
+                here came from reading SQL files and TypeScript source.
+              </span>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- CTA -->
+      <section class="border-t border-slate-800/60 bg-slate-950/40 py-24">
+        <div class="mx-auto max-w-4xl px-6 text-center">
+          <h2 class="text-3xl font-semibold tracking-tight md:text-4xl">
+            Want the same report on your repo?
+          </h2>
+          <p class="mx-auto mt-4 max-w-2xl text-lg text-slate-300">
+            Drop the GitHub Action into your workflow. The first PR you ship
+            after merging it is the first one MergeBrake comments on.
+          </p>
+          <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
+            <a href="/#install"
+               class="inline-flex items-center gap-2 rounded-full bg-brake-500 px-5 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-brake-400">
+              Install the GitHub Action <span aria-hidden="true">→</span>
+            </a>
+            <a href="mailto:hi@mergebrake.dev?subject=MergeBrake%20design%20partner"
+               class="inline-flex items-center gap-2 rounded-full border border-slate-700 px-5 py-2.5 text-sm font-medium text-slate-200 transition hover:border-slate-500 hover:text-white">
+              Become a design partner
+            </a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="border-t border-slate-800/60 bg-slate-950/40 py-10">
+      <div class="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-6 text-sm text-slate-400 md:flex-row">
+        <div class="flex items-center gap-2">
+          <svg viewBox="0 0 64 64" class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <rect width="64" height="64" rx="14" fill="#0f172a" />
+            <path d="M14 38 H50 M14 30 H50 M32 14 L32 50" stroke="#f97316" stroke-width="5" stroke-linecap="round" />
+          </svg>
+          <span>MergeBrake · MIT licensed</span>
+        </div>
+        <div class="flex gap-6">
+          <a href="https://github.com/mergebrake/mergebrake" class="hover:text-white">GitHub</a>
+          <a href="https://github.com/mergebrake/mergebrake/issues" class="hover:text-white">Issues</a>
+          <a href="mailto:hi@mergebrake.dev" class="hover:text-white">Contact</a>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

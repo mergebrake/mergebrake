@@ -3,28 +3,28 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>MergeBrake — catch database-breaking PRs before merge</title>
+    <title>MergeBrake — stop dangerous DB migrations from merging</title>
     <meta
       name="description"
-      content="MergeBrake is a GitHub-native schema impact guard. It maps every Prisma, Drizzle, Knex, Sequelize or TypeORM migration to the application code it can break, with a sticky PR comment that updates on every push."
+      content="MergeBrake stops dangerous Postgres migrations from merging. It maps every Prisma and Drizzle schema change to the application code it would break, with a sticky PR comment that updates on every push."
     />
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f172a'/%3E%3Cpath d='M14 38 H50 M14 30 H50 M32 14 L32 50' stroke='%23f97316' stroke-width='5' stroke-linecap='round'/%3E%3C/svg%3E" />
-    <meta property="og:title" content="MergeBrake — pre-merge schema impact guard" />
+    <meta property="og:title" content="MergeBrake — stop dangerous DB migrations from merging" />
     <meta
       property="og:description"
-      content="Catch database-breaking PRs before merge. Sticky PR comment, expand/contract recipes, ORM-aware impact mapping."
+      content="Stops dangerous Postgres + Prisma / Drizzle migrations before they merge. Sticky PR comment, expand/contract recipes, ORM-aware impact mapping."
     />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://mergebrake.dev/" />
     <meta property="og:image" content="https://mergebrake.dev/og.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="MergeBrake — Catch database-breaking PRs before merge. 2,339 findings across 1,066 migrations in dogfood." />
+    <meta property="og:image:alt" content="MergeBrake — Stop dangerous DB migrations from merging. 2,339 findings across 1,066 real migrations." />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="MergeBrake — pre-merge schema impact guard" />
+    <meta name="twitter:title" content="MergeBrake — stop dangerous DB migrations from merging" />
     <meta
       name="twitter:description"
-      content="Catch database-breaking PRs before merge. Sticky PR comment + ORM-aware impact mapping for Postgres + Prisma / Drizzle."
+      content="Stops dangerous Postgres + Prisma / Drizzle migrations before they merge. Sticky PR comment + ORM-aware impact mapping."
     />
     <meta name="twitter:image" content="https://mergebrake.dev/og.png" />
     <script src="https://cdn.tailwindcss.com"></script>
@@ -135,6 +135,7 @@
         <nav class="hidden gap-8 text-sm text-slate-300 md:flex">
           <a class="hover:text-white" href="#how-it-works">How it works</a>
           <a class="hover:text-white" href="#sample">Sample report</a>
+          <a class="hover:text-white" href="/findings.html">Findings</a>
           <a class="hover:text-white" href="#install">Install</a>
           <a class="hover:text-white" href="#faq">FAQ</a>
         </nav>
@@ -163,18 +164,19 @@
             <h1
               class="mt-6 text-4xl font-semibold tracking-tight md:text-5xl lg:text-6xl"
             >
-              Catch database-breaking PRs
-              <span class="text-brake-400">before merge</span>.
+              Stop dangerous DB migrations
+              <span class="text-brake-400">from merging</span>.
             </h1>
             <p class="mt-6 max-w-2xl text-lg leading-relaxed text-slate-300">
-              MergeBrake is a GitHub-native schema impact guard. It maps every
+              MergeBrake is the pre-merge guard for <span class="text-white">Postgres + Prisma / Drizzle</span> teams.
+              It maps every
               <span class="font-mono text-brake-400">DROP COLUMN</span>,
               <span class="font-mono text-brake-400">RENAME</span>, or unsafe
               <span class="font-mono text-brake-400">NOT NULL</span> to the
-              <span class="text-white">application code</span> it can break —
-              including Prisma <span class="font-mono">@map</span> and Drizzle
-              column aliases — and posts a sticky review comment that updates on
-              every push.
+              <span class="text-white">application code</span> it would break —
+              following Prisma <span class="font-mono">@map</span> and Drizzle
+              <span class="font-mono">pgTable</span> aliases — and posts a
+              sticky review comment that updates on every push.
             </p>
 
             <div class="mt-8 flex flex-wrap gap-3">

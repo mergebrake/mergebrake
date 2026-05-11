@@ -1,18 +1,19 @@
 # MergeBrake
 
-> MergeBrake catches database-breaking PRs before merge.
-> It maps schema changes to the application code they will break.
+> **Stops dangerous database migrations before they merge.**
+> Maps every `DROP COLUMN`, `RENAME`, or unsafe `NOT NULL` to the application
+> code it would break — across Prisma, Drizzle, and raw SQL.
 
-MergeBrake is a GitHub-native schema impact guard for Postgres apps. It scans a
-pull request, detects destructive or downtime-prone database changes, follows
-the affected table and column names into application code, and tells reviewers
-whether the PR is **SAFE**, needs an **EXPAND / CONTRACT** rollout, or must be
-**BLOCKED**.
+MergeBrake is a GitHub-native schema impact guard for Postgres apps using
+**Prisma** or **Drizzle**. It scans a pull request, detects destructive or
+downtime-prone database changes, follows the affected table and column names
+into application code, and tells reviewers whether the PR is **SAFE**, needs an
+**EXPAND / CONTRACT** rollout, or must be **BLOCKED**.
 
 The wedge is not "another migration linter". MergeBrake is built for the moment
 when Claude, Cursor, Codex, or another coding agent removes `users.full_name`
-from Prisma/Drizzle and the app still reads it through `fullName`, raw SQL, API
-serializers, or background jobs.
+from your Prisma schema (or your Drizzle `pgTable`) and the app still reads it
+through `fullName`, raw SQL, API serializers, or background jobs.
 
 ```bash
 npx mergebrake scan "prisma/migrations/**/migration.sql" \
@@ -40,6 +41,23 @@ AI-PR detected (scrutiny x3.00): Claude
     [migrate-data]  Optionally archive users.full_name.
     [contract]      Drop the column in a later migration.
 ```
+
+## See it in action
+
+<!--
+  The animated demo (assets/demo.gif) is generated locally via Charm VHS so it
+  stays reproducible. Run `vhs assets/demo.tape` from the repo root after
+  `npm run build`. Once committed, GitHub renders it inline here:
+-->
+<a href="./assets/demo.tape"><img alt="MergeBrake demo (≈25s)" src="./assets/demo.gif" /></a>
+
+> 25 seconds: a PR drops `users.full_name`, MergeBrake flags it as BLOCK with
+> the exact lines of app code that still reach the column through Prisma's
+> `@map` alias, and prints the expand/contract recipe the reviewer can copy.
+>
+> Don't see a GIF yet? It's rendered locally from
+> [`assets/demo.tape`](./assets/demo.tape) — see [`assets/README.md`](./assets/README.md)
+> for the one-liner that produces it.
 
 ## Why It Exists
 
