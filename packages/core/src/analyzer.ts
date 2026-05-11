@@ -57,7 +57,7 @@ export async function analyzeMigration(
     repoRoot: opts.repoRoot,
   });
 
-  const rawFindings = runRules({
+  const rawFindings = await runRules({
     sqlBlocks,
     ormStack,
     dialect,

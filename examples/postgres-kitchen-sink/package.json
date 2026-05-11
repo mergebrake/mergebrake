@@ -1,0 +1,10 @@
+{
+  "name": "example-postgres-kitchen-sink",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Fixture exercising every Postgres AST rule MergeBrake ships in v0.1.",
+  "dependencies": {
+    "@prisma/client": "5.0.0",
+    "prisma": "5.0.0"
+  }
+}

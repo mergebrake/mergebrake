@@ -181,13 +181,42 @@ mergebrake scan ... --fail-on SAFE              # strict: exit 1 on any finding
 
 ## Current Rules
 
+For Postgres, MergeBrake uses libpg_query (Postgres' own parser) — no regex,
+no false positives on `-- DROP COLUMN` comments, full schema-qualified names
+and constraint kinds resolved precisely. MySQL and SQLite migrations fall back
+to a regex linter that covers the destructive family.
+
+### Destructive
 | Rule ID | Severity | Detects |
 |---|---|---|
-| `destructive/drop-column` | critical | `ALTER TABLE ... DROP COLUMN` |
+| `destructive/drop-column` | critical | `ALTER TABLE ... DROP COLUMN` (with optional CASCADE) |
 | `destructive/drop-table` | critical | `DROP TABLE` and `DROP TABLE CASCADE` |
 | `destructive/rename-column` | high | `ALTER TABLE ... RENAME COLUMN` |
+| `destructive/truncate` | critical | `TRUNCATE TABLE` (and `CASCADE`) inside a migration |
+
+### Locking / downtime
+| Rule ID | Severity | Detects |
+|---|---|---|
 | `locking/add-not-null-without-default` | high | `ADD COLUMN x NOT NULL` with no default |
-| `locking/create-index-non-concurrent` | medium | `CREATE INDEX` without `CONCURRENTLY` |
+| `locking/create-index-non-concurrent` | medium / high | `CREATE INDEX` without `CONCURRENTLY` (UNIQUE escalates to high) |
+| `locking/alter-column-type` | high | `ALTER COLUMN ... TYPE ...` (table rewrite) |
+| `locking/add-foreign-key-without-not-valid` | high | `ADD FOREIGN KEY` validated inline |
+| `locking/add-unique-constraint` | high | `ADD CONSTRAINT ... UNIQUE` without `USING INDEX` |
+| `locking/add-primary-key` | high | `ADD PRIMARY KEY` without `USING INDEX` |
+| `locking/add-check-without-not-valid` | medium | `ADD CONSTRAINT ... CHECK` validated inline |
+| `locking/set-not-null` | medium | `ALTER COLUMN ... SET NOT NULL` |
+
+### Safety / data
+| Rule ID | Severity | Detects |
+|---|---|---|
+| `safety/set-default-volatile` | medium | `SET DEFAULT now()` / `gen_random_uuid()` / volatile funcs |
+| `safety/update-without-where` | high | `UPDATE` with no `WHERE` (unbounded backfill in one transaction) |
+| `safety/alter-enum-rename-value` | high | `ALTER TYPE ... RENAME VALUE` (silent app-code break) |
+| `safety/alter-enum-add-value` | low | `ALTER TYPE ... ADD VALUE` (commit-in-transaction caveat) |
+
+### Deploy order
+| Rule ID | Severity | Detects |
+|---|---|---|
 | `deploy-order/contract-without-expand` | high | Base branch still used a symbol that the PR now drops |
 
 ## Positioning
