@@ -26,10 +26,11 @@ export async function extractSqlFromOrm(
   for (const file of resolvedInputs) {
     const ext = path.extname(file).toLowerCase();
     const content = await fs.readFile(file, "utf-8");
+    const sourceFile = toReportPath(opts.repoRoot, file);
 
     if (ext === ".sql") {
       blocks.push({
-        sourceFile: file,
+        sourceFile,
         ormStack: opts.ormStack === "raw-sql" ? "raw-sql" : opts.ormStack,
         sql: content,
         startLine: 1,
@@ -42,7 +43,7 @@ export async function extractSqlFromOrm(
       if (extracted.length > 0) {
         for (const block of extracted) {
           blocks.push({
-            sourceFile: file,
+            sourceFile,
             ormStack: "knex",
             sql: block.sql,
             startLine: block.startLine,
@@ -55,7 +56,7 @@ export async function extractSqlFromOrm(
       const extracted = extractTypeormRawSql(content);
       for (const block of extracted) {
         blocks.push({
-          sourceFile: file,
+          sourceFile,
           ormStack: "typeorm",
           sql: block.sql,
           startLine: block.startLine,
@@ -96,6 +97,15 @@ async function resolveInputs(
     }
   }
   return Array.from(files);
+}
+
+function toReportPath(repoRoot: string, file: string): string {
+  const relative = path.relative(repoRoot, file);
+  const display =
+    relative && !relative.startsWith("..") && !path.isAbsolute(relative)
+      ? relative
+      : file;
+  return display.replace(/\\/g, "/");
 }
 
 interface RawBlock {

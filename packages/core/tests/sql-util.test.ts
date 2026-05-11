@@ -25,12 +25,31 @@ describe("splitStatements", () => {
     expect(stmts[0]!.text).toBe("DROP TABLE users");
   });
 
+  it("splits semicolon-separated statements on the same line", () => {
+    const stmts = splitStatements(
+      `ALTER TABLE users DROP COLUMN x; CREATE INDEX i ON users(email);`,
+    );
+    expect(stmts).toHaveLength(2);
+    expect(stmts[0]!.startLine).toBe(1);
+    expect(stmts[1]!.startLine).toBe(1);
+  });
+
+  it("does not split semicolons inside strings or function bodies", () => {
+    const stmts = splitStatements(
+      `SELECT ';';\nDO $$ BEGIN RAISE NOTICE ';'; END $$;\nDROP TABLE users;`,
+    );
+    expect(stmts).toHaveLength(3);
+    expect(stmts[2]!.text).toBe("DROP TABLE users");
+    expect(stmts[2]!.startLine).toBe(3);
+  });
+
   it("strips line comments", () => {
     const stmts = splitStatements(
       `-- this is a comment\nALTER TABLE users DROP COLUMN x;`,
     );
     expect(stmts).toHaveLength(1);
     expect(stmts[0]!.text.startsWith("ALTER")).toBe(true);
+    expect(stmts[0]!.startLine).toBe(2);
   });
 });
 

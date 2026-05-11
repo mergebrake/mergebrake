@@ -4,10 +4,10 @@ const AI_COAUTHOR_PATTERNS: ReadonlyArray<{
   pattern: RegExp;
   label: string;
 }> = [
-  { pattern: /Co-Authored-By:\s*Claude\b/i, label: "Claude" },
   { pattern: /Co-Authored-By:\s*Claude Code\b/i, label: "Claude Code" },
+  { pattern: /Co-Authored-By:\s*Claude(?!\s+Code)\b/i, label: "Claude" },
   { pattern: /Co-Authored-By:\s*Cursor\b/i, label: "Cursor" },
-  { pattern: /Co-Authored-By:\s*Codex\b/i, label: "Codex" },
+  { pattern: /Co-Authored-By:\s*(?:OpenAI\s+)?Codex\b/i, label: "Codex" },
   { pattern: /Co-Authored-By:\s*Copilot\b/i, label: "GitHub Copilot" },
   { pattern: /Co-Authored-By:\s*Devin\b/i, label: "Devin" },
   { pattern: /Co-Authored-By:\s*Aider\b/i, label: "Aider" },

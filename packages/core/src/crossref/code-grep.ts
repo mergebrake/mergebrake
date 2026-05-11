@@ -65,9 +65,10 @@ export async function findCrossReferences(
 
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i] ?? "";
+        if (isCommentOnlyLine(line)) continue;
         if (matcher.test(line)) {
           refs.push({
-            file: path.relative(opts.repoRoot, file),
+            file: path.relative(opts.repoRoot, file).replace(/\\/g, "/"),
             line: i + 1,
             snippet: line.trim().slice(0, 200),
             symbol,
@@ -81,6 +82,17 @@ export async function findCrossReferences(
   }
 
   return refs;
+}
+
+function isCommentOnlyLine(line: string): boolean {
+  const trimmed = line.trim();
+  return (
+    trimmed.startsWith("//") ||
+    trimmed.startsWith("#") ||
+    trimmed.startsWith("--") ||
+    trimmed.startsWith("/*") ||
+    trimmed.startsWith("*")
+  );
 }
 
 /**

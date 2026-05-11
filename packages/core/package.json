@@ -16,12 +16,11 @@
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "clean": "rimraf dist",
-    "test": "vitest run"
+    "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
+    "test": "cd ../.. && vitest run"
   },
   "dependencies": {
     "@mergebrake/shared": "*",
-    "libpg-query": "^16.2.0",
     "fast-glob": "^3.3.2"
   },
   "license": "MIT"

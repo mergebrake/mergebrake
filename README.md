@@ -28,11 +28,11 @@ ORM stack:  prisma    Dialect: postgres
 AI-PR detected (scrutiny x3.00): Claude
 
 #1  CRITICAL  DROP COLUMN users.full_name is destructive
-  prisma/migrations/20260511_drop_full_name/migration.sql:1
+  prisma/migrations/20260511_drop_full_name/migration.sql:3
   This migration drops column `full_name` from `users`. Dropping a column
   is irreversible…
 
-  Cross-surface impact (5 references in app code):
+  Cross-surface impact (3 references in app code):
     • src/api/profile.ts:9   name: u.fullName,
     • src/api/users.ts:11    full_name: true,
     • src/api/users.ts:18    SELECT id, email, full_name FROM users …
@@ -66,12 +66,12 @@ Existing tools either focus on:
 |---|---|---|
 | [Atlas](https://atlasgo.io/) (Ariga) | Schema-as-code + lint behind a $9/dev paywall | Paywalled, complex, no AI-PR awareness |
 | [pgroll](https://pgroll.com/) (Xata) | Zero-downtime executor | Runs migrations; doesn't analyze them |
-| [Squawk](https://squawkhq.com/) | 32 Postgres rules, no auto-fix | Linter only, no cross-app awareness, no recipes |
-| [pgfence](https://pgfence.com/) | Postgres lock-mode analysis | Postgres-only, doesn't scan app code |
+| [Squawk](https://squawkhq.com/) | Postgres migration lint rules | Linter only, no cross-app awareness, no AI-PR risk model |
+| [pgfence](https://pgfence.com/) | Postgres lock-mode analysis + safe rewrites | Postgres-only, no AI-PR amplification, doesn't scan app code |
 | [strong_migrations](https://github.com/ankane/strong_migrations) | Rails-only, but excellent | Rails only |
 | [CodeRabbit](https://coderabbit.ai/), [Greptile](https://greptile.com/) | Generic AI PR review | Not specialized in DB risk |
 
-**MergeBrake is the only tool that does all four:**
+**MergeBrake's wedge is the combination of:**
 
 1. **Cross-surface analysis.** When a migration drops `users.full_name`,
    MergeBrake greps your TypeScript / Python / JavaScript code for every

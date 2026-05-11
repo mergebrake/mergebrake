@@ -13,26 +13,134 @@ const LINE_COMMENT = /--[^\n]*/g;
 const BLOCK_COMMENT = /\/\*[\s\S]*?\*\//g;
 
 export function splitStatements(sql: string): SqlStatement[] {
-  // Strip comments first so we don't accidentally split inside `-- ;`.
-  const stripped = stripComments(sql);
   const out: SqlStatement[] = [];
-  const parts = stripped.split(/;[\t ]*\r?\n|;\s*$/);
-  let cursor = 0;
-  for (let i = 0; i < parts.length; i++) {
-    const raw = parts[i] ?? "";
-    const trimmed = raw.trim();
-    if (trimmed.length > 0) {
-      const startLine = stripped.slice(0, cursor).split("\n").length;
-      out.push({ text: trimmed, startLine });
+
+  let segmentStart = 0;
+  let segmentStartLine = 1;
+  let line = 1;
+  let inLineComment = false;
+  let inBlockComment = false;
+  let inSingleQuote = false;
+  let inDoubleQuote = false;
+  let dollarQuoteTag: string | null = null;
+
+  for (let i = 0; i < sql.length; i++) {
+    const ch = sql[i] ?? "";
+    const next = sql[i + 1] ?? "";
+
+    if (ch === "\n") {
+      line++;
+      if (inLineComment) inLineComment = false;
+      continue;
     }
-    cursor += raw.length + 1; // +1 for the terminator we stripped
+
+    if (inLineComment) continue;
+
+    if (inBlockComment) {
+      if (ch === "*" && next === "/") {
+        inBlockComment = false;
+        i++;
+      }
+      continue;
+    }
+
+    if (dollarQuoteTag) {
+      if (sql.startsWith(dollarQuoteTag, i)) {
+        i += dollarQuoteTag.length - 1;
+        dollarQuoteTag = null;
+      }
+      continue;
+    }
+
+    if (inSingleQuote) {
+      if (ch === "'" && next === "'") {
+        i++;
+      } else if (ch === "'") {
+        inSingleQuote = false;
+      }
+      continue;
+    }
+
+    if (inDoubleQuote) {
+      if (ch === '"' && next === '"') {
+        i++;
+      } else if (ch === '"') {
+        inDoubleQuote = false;
+      }
+      continue;
+    }
+
+    if (ch === "-" && next === "-") {
+      inLineComment = true;
+      i++;
+      continue;
+    }
+
+    if (ch === "/" && next === "*") {
+      inBlockComment = true;
+      i++;
+      continue;
+    }
+
+    if (ch === "'") {
+      inSingleQuote = true;
+      continue;
+    }
+
+    if (ch === '"') {
+      inDoubleQuote = true;
+      continue;
+    }
+
+    if (ch === "$") {
+      const tag = readDollarQuoteTag(sql, i);
+      if (tag) {
+        dollarQuoteTag = tag;
+        i += tag.length - 1;
+        continue;
+      }
+    }
+
+    if (ch === ";") {
+      pushStatement(sql.slice(segmentStart, i), segmentStartLine, out);
+      segmentStart = i + 1;
+      segmentStartLine = line;
+    }
   }
+
+  pushStatement(sql.slice(segmentStart), segmentStartLine, out);
   return out;
+}
+
+function pushStatement(
+  raw: string,
+  segmentStartLine: number,
+  out: SqlStatement[],
+): void {
+  const stripped = stripComments(raw);
+  const leadingWhitespace = stripped.match(/^\s*/)?.[0] ?? "";
+  const text = stripped.trim();
+  if (text.length === 0) return;
+  out.push({
+    text,
+    startLine: segmentStartLine + countNewlines(leadingWhitespace),
+  });
+}
+
+function countNewlines(text: string): number {
+  return (text.match(/\n/g) ?? []).length;
+}
+
+function readDollarQuoteTag(text: string, pos: number): string | null {
+  const match = /^\$[A-Za-z_][A-Za-z0-9_]*\$|^\$\$/.exec(text.slice(pos));
+  return match?.[0] ?? null;
 }
 
 /** Strip comments before pattern matching. */
 export function stripComments(sql: string): string {
-  return sql.replace(BLOCK_COMMENT, " ").replace(LINE_COMMENT, " ");
+  return sql
+    .replace(BLOCK_COMMENT, (comment) => comment.replace(/[^\n]/g, " "))
+    .replace(LINE_COMMENT, " ");
 }
 
 /**

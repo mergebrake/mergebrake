@@ -13,11 +13,12 @@ export const addNotNullWithoutDefaultRule: Rule = {
         findings.push({
           ruleId: "locking/add-not-null-without-default",
           severity: "high",
-          title: `ADD COLUMN ${m.column} NOT NULL without DEFAULT blocks writes on ${m.table}`,
+          title: `ADD COLUMN ${m.column} NOT NULL without DEFAULT is unsafe on ${m.table}`,
           message:
-            `Adding a NOT NULL column without a DEFAULT requires Postgres to rewrite every existing row, ` +
-            `holding an ACCESS EXCLUSIVE lock on \`${m.table}\` for the duration. On large tables this means ` +
-            `minutes (or hours) of downtime. Also, any INSERT issued during the migration that omits the new column will fail.`,
+            `Adding a NOT NULL column without a DEFAULT is not a safe single-step migration. ` +
+            `On a non-empty Postgres table it usually fails because existing rows would contain NULL; ` +
+            `even when it succeeds, the DDL takes an ACCESS EXCLUSIVE lock on \`${m.table}\`, and any INSERT ` +
+            `that omits the new column will fail as soon as the migration lands.`,
           location: {
             file: ctx.block.sourceFile,
             line: ctx.block.startLine + s.startLine - 1,

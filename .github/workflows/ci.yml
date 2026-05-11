@@ -14,11 +14,19 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
-      - run: npm run build --workspaces --if-present
-      - run: npx vitest run
+      - run: npm run build
+      - run: npm test
       - name: Dogfood — scan our own examples
         run: |
+          set +e
           node packages/cli/dist/cli.js scan "prisma/migrations/**/migration.sql" \
             --repo "examples/prisma-drop-column" \
             --commits "examples/prisma-drop-column/commits.txt" \
-            --fail-on EXPAND_CONTRACT || echo "Example: BLOCK detected as expected ($?)"
+            --fail-on EXPAND_CONTRACT
+          code=$?
+          set -e
+          if [ "$code" -ne 1 ]; then
+            echo "Expected example scan to exit 1, got $code"
+            exit 1
+          fi
+          echo "Example: BLOCK detected as expected"

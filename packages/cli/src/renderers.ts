@@ -105,9 +105,11 @@ export function renderMarkdown(
   if (opts.githubAnnotations) {
     for (const f of report.findings) {
       const lvl = f.severity === "critical" || f.severity === "high" ? "error" : "warning";
-      const msg = f.title.replace(/[\r\n]+/g, " ");
+      const msg = escapeGitHubAnnotationMessage(f.title);
+      const file = escapeGitHubAnnotationProperty(f.location.file);
+      const title = escapeGitHubAnnotationProperty("MergeBrake");
       out.push(
-        `::${lvl} file=${f.location.file},line=${f.location.line},title=MergeBrake::${msg}`,
+        `::${lvl} file=${file},line=${f.location.line},title=${title}::${msg}`,
       );
     }
   }
@@ -207,4 +209,18 @@ function colorVerdict(v: Verdict): string {
     case "BLOCK":
       return pc.red(pc.bold(VERDICT_BADGE[v]));
   }
+  return String(v);
+}
+
+function escapeGitHubAnnotationMessage(value: string): string {
+  return value
+    .replace(/%/g, "%25")
+    .replace(/\r/g, "%0D")
+    .replace(/\n/g, "%0A");
+}
+
+function escapeGitHubAnnotationProperty(value: string): string {
+  return escapeGitHubAnnotationMessage(value)
+    .replace(/:/g, "%3A")
+    .replace(/,/g, "%2C");
 }

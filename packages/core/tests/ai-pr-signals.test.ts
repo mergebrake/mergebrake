@@ -17,6 +17,13 @@ describe("detectAiPrSignals", () => {
     expect(s.scrutinyMultiplier).toBeGreaterThanOrEqual(2.5);
   });
 
+  it("does not double-count Claude Code as both Claude Code and Claude", () => {
+    const s = detectAiPrSignals([
+      "Co-Authored-By: Claude Code <noreply@anthropic.com>",
+    ]);
+    expect(s.coAuthors).toEqual(["Claude Code"]);
+  });
+
   it("detects Cursor", () => {
     const s = detectAiPrSignals(["Co-Authored-By: Cursor <noreply@cursor.sh>"]);
     expect(s.coAuthors).toContain("Cursor");
