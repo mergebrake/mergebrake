@@ -1,0 +1,8 @@
+feat: drop unused full_name column
+
+The full_name column is no longer used in the application.
+We'll consolidate naming into first_name + last_name instead.
+
+🤖 Generated with Claude Code (https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>

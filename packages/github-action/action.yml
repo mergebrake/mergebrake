@@ -1,0 +1,59 @@
+name: MergeBrake — pre-merge migration guard
+description: Hit the brake before AI-generated PRs hit production. Scans DB migrations for destructive or downtime-prone changes.
+author: MergeBrake contributors
+branding:
+  icon: shield
+  color: red
+
+inputs:
+  inputs:
+    description: Glob(s) of migration files to scan (space-separated). Default scans common Prisma/Drizzle/Knex paths.
+    required: false
+    default: >-
+      prisma/migrations/**/migration.sql
+      drizzle/**/*.sql
+      migrations/**/*.sql
+      db/migrate/**/*.sql
+  fail-on:
+    description: 'Verdict that triggers a failed check: BLOCK | EXPAND_CONTRACT | SAFE.'
+    required: false
+    default: BLOCK
+  dialect:
+    description: 'Database dialect: postgres | mysql | sqlite.'
+    required: false
+    default: postgres
+  orm:
+    description: 'Force an ORM stack instead of auto-detection: prisma | drizzle | knex | sequelize | typeorm | raw-sql.'
+    required: false
+    default: ''
+  format:
+    description: 'Output format: terminal | markdown | github | json.'
+    required: false
+    default: github
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+    - name: Collect commit messages
+      shell: bash
+      run: |
+        if [ -n "${GITHUB_BASE_REF:-}" ]; then
+          git log --format='%B%n---' "origin/${GITHUB_BASE_REF}..HEAD" > /tmp/mergebrake-commits.txt
+        else
+          git log -n 20 --format='%B%n---' HEAD > /tmp/mergebrake-commits.txt
+        fi
+    - name: Run MergeBrake
+      shell: bash
+      run: |
+        ORM_FLAG=""
+        if [ -n "${{ inputs.orm }}" ]; then ORM_FLAG="--orm ${{ inputs.orm }}"; fi
+        npx --yes mergebrake@latest scan ${{ inputs.inputs }} \
+          --dialect "${{ inputs.dialect }}" \
+          --format "${{ inputs.format }}" \
+          --commits /tmp/mergebrake-commits.txt \
+          --fail-on "${{ inputs.fail-on }}" \
+          $ORM_FLAG

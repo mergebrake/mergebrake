@@ -1,0 +1,28 @@
+{
+  "name": "@mergebrake/core",
+  "version": "0.0.1",
+  "description": "MergeBrake core engine: SQL parsing, multi-ORM detection, risk rules, expand/contract recipes, cross-surface analysis.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "rimraf dist",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@mergebrake/shared": "*",
+    "libpg-query": "^16.2.0",
+    "fast-glob": "^3.3.2"
+  },
+  "license": "MIT"
+}

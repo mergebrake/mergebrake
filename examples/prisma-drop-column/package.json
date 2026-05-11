@@ -1,0 +1,10 @@
+{
+  "name": "example-prisma-drop-column",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Fixture: a Prisma project where Claude Code generated a destructive DROP COLUMN migration while the app still references the column.",
+  "dependencies": {
+    "@prisma/client": "5.0.0",
+    "prisma": "5.0.0"
+  }
+}

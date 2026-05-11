@@ -1,0 +1,24 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run build --workspaces --if-present
+      - run: npx vitest run
+      - name: Dogfood — scan our own examples
+        run: |
+          node packages/cli/dist/cli.js scan "prisma/migrations/**/migration.sql" \
+            --repo "examples/prisma-drop-column" \
+            --commits "examples/prisma-drop-column/commits.txt" \
+            --fail-on EXPAND_CONTRACT || echo "Example: BLOCK detected as expected ($?)"

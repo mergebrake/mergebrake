@@ -1,0 +1,53 @@
+{
+  "name": "mergebrake",
+  "version": "0.0.1",
+  "description": "Hit the brake before AI-generated PRs hit production. Pre-merge guard for database migrations.",
+  "type": "module",
+  "bin": {
+    "mergebrake": "./dist/cli.js"
+  },
+  "main": "./dist/cli.js",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "rimraf dist",
+    "test": "vitest run",
+    "start": "node dist/cli.js"
+  },
+  "dependencies": {
+    "@mergebrake/core": "*",
+    "@mergebrake/shared": "*",
+    "commander": "^12.1.0",
+    "picocolors": "^1.0.1"
+  },
+  "keywords": [
+    "database",
+    "migration",
+    "postgres",
+    "prisma",
+    "drizzle",
+    "knex",
+    "sequelize",
+    "typeorm",
+    "ai",
+    "vibe-coding",
+    "pre-merge",
+    "github-action",
+    "ci",
+    "schema-migration",
+    "expand-contract"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "homepage": "https://mergebrake.dev",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mergebrake/mergebrake.git",
+    "directory": "packages/cli"
+  }
+}

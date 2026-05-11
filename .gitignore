@@ -1,0 +1,17 @@
+node_modules/
+dist/
+*.tsbuildinfo
+.DS_Store
+.env
+.env.local
+.env.*.local
+*.log
+npm-debug.log*
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+coverage/
+.nyc_output/
+.turbo/
+.cache/
