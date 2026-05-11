@@ -6,7 +6,7 @@ import {
   DEFAULT_STICKY_MARKER,
   type IssueComment,
 } from "../src/github-comment.js";
-import type { AnalysisReport } from "@mergebrake/shared";
+import type { AnalysisReport } from "mergebrake-shared";
 
 const baseReport: AnalysisReport = {
   verdict: "BLOCK",

@@ -1,4 +1,4 @@
-import type { Finding } from "@mergebrake/shared";
+import type { Finding } from "mergebrake-shared";
 import type { Rule, RuleContext } from "./index.js";
 import { splitStatements, matchDropTable } from "./sql-util.js";
 

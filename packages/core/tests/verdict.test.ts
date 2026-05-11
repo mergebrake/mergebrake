@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { computeVerdict } from "../src/verdict.js";
-import type { Finding, AiPrSignals } from "@mergebrake/shared";
+import type { Finding, AiPrSignals } from "mergebrake-shared";
 
 const baseAi: AiPrSignals = {
   hasCoAuthoredByAi: false,

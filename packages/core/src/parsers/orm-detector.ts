@@ -1,7 +1,7 @@
 import fg from "fast-glob";
 import path from "node:path";
 import fs from "node:fs/promises";
-import type { OrmStack } from "@mergebrake/shared";
+import type { OrmStack } from "mergebrake-shared";
 
 interface OrmSignal {
   stack: OrmStack;

@@ -1,4 +1,4 @@
-import type { AnalysisReport } from "@mergebrake/shared";
+import type { AnalysisReport } from "mergebrake-shared";
 import { renderMarkdown } from "./renderers.js";
 
 /**

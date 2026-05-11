@@ -1,4 +1,4 @@
-import type { Severity } from "@mergebrake/shared";
+import type { Severity } from "mergebrake-shared";
 
 /**
  * Parsed shape of a `.mergebrake.yml` file. Every field is optional so the

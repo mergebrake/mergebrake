@@ -2,8 +2,8 @@ import type {
   Finding,
   AiPrSignals,
   Verdict,
-} from "@mergebrake/shared";
-import { SEVERITY_WEIGHT, VERDICT_THRESHOLDS } from "@mergebrake/shared";
+} from "mergebrake-shared";
+import { SEVERITY_WEIGHT, VERDICT_THRESHOLDS } from "mergebrake-shared";
 
 export function computeVerdict(input: {
   findings: Finding[];

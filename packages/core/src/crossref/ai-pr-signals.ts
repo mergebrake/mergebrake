@@ -1,4 +1,4 @@
-import type { AiPrSignals } from "@mergebrake/shared";
+import type { AiPrSignals } from "mergebrake-shared";
 
 const AI_COAUTHOR_PATTERNS: ReadonlyArray<{
   pattern: RegExp;

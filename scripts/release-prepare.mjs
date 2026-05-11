@@ -44,7 +44,7 @@ const PACKAGE_FILES = [
   "package.json",
   ...PUBLIC_PACKAGES.map((p) => path.join(p, "package.json")),
 ];
-const WORKSPACE_DEPS = ["@mergebrake/shared", "@mergebrake/core"];
+const WORKSPACE_DEPS = ["mergebrake-shared", "mergebrake-core"];
 
 const summary = [];
 

@@ -1,4 +1,4 @@
-import type { Finding, OrmStack, DatabaseDialect } from "@mergebrake/shared";
+import type { Finding, OrmStack, DatabaseDialect } from "mergebrake-shared";
 import type { SqlBlock } from "../../parsers/orm-sql-extractor.js";
 import type { ParsedStatement } from "../../parsers/postgres-ast.js";
 

@@ -1,4 +1,4 @@
-import type { Finding } from "@mergebrake/shared";
+import type { Finding } from "mergebrake-shared";
 import type { MergeBrakeConfig } from "./types.js";
 
 /**

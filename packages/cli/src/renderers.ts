@@ -1,4 +1,4 @@
-import type { AnalysisReport, Finding, Verdict } from "@mergebrake/shared";
+import type { AnalysisReport, Finding, Verdict } from "mergebrake-shared";
 import pc from "picocolors";
 
 const VERDICT_BADGE: Record<Verdict, string> = {

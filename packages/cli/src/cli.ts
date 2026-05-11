@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { Command } from "commander";
-import { analyzeMigration, loadConfig } from "@mergebrake/core";
-import type { AnalysisReport } from "@mergebrake/shared";
+import { analyzeMigration, loadConfig } from "mergebrake-core";
+import type { AnalysisReport } from "mergebrake-shared";
 import { renderMarkdown, renderTerminal, renderJson } from "./renderers.js";
 import { renderSarif } from "./sarif.js";
 import { appendFile, readFile } from "node:fs/promises";

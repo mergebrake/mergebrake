@@ -163,7 +163,7 @@ I'd love feedback on the ruleset and which patterns I missed. The
 **Pre-launch checklist**:
 
 - [ ] Register `mergebrake.dev` and deploy `website/` to Cloudflare Pages.
-- [ ] Publish `@mergebrake/shared`, `@mergebrake/core`, `mergebrake` to npm.
+- [ ] Publish `mergebrake-shared`, `mergebrake-core`, `mergebrake` to npm.
 - [ ] Push the repo to GitHub and enable issues + discussions.
 - [ ] List the action on the GitHub Marketplace.
 - [ ] Take one good screenshot of the sticky PR comment running on a fresh

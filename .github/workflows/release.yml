@@ -63,7 +63,7 @@ jobs:
               const file = process.argv[1];
               const tag = process.env.TAG;
               const pkg = require("./" + file);
-              for (const dep of ["@mergebrake/shared", "@mergebrake/core"]) {
+              for (const dep of ["mergebrake-shared", "mergebrake-core"]) {
                 const actual = pkg.dependencies && pkg.dependencies[dep];
                 if (actual !== undefined && actual !== tag) {
                   console.error(`::error::${file} dependency ${dep}=${actual} does not match ${tag}. Run release-prepare.`);
@@ -83,13 +83,13 @@ jobs:
             echo "::endgroup::"
           done
 
-      - name: Publish @mergebrake/shared
+      - name: Publish mergebrake-shared
         working-directory: packages/shared
         run: npm publish --access public --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Publish @mergebrake/core
+      - name: Publish mergebrake-core
         working-directory: packages/core
         run: npm publish --access public --provenance
         env:

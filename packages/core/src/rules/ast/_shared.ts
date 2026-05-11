@@ -1,4 +1,4 @@
-import type { Finding, Severity } from "@mergebrake/shared";
+import type { Finding, Severity } from "mergebrake-shared";
 import type { AstRuleContext } from "./index.js";
 
 export interface PartialFinding {

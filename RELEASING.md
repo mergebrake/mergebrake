@@ -7,8 +7,8 @@ done by a human with the right credentials.
 
 The published artifacts are:
 
-- `@mergebrake/shared` on npm
-- `@mergebrake/core` on npm
+- `mergebrake-shared` on npm
+- `mergebrake-core` on npm
 - `mergebrake` on npm (CLI; this is the public entrypoint)
 - a GitHub release for the same tag
 - a moved major mobile tag (e.g. `v0` always points at the latest `v0.x.y`) so
@@ -16,11 +16,11 @@ The published artifacts are:
 
 ## One-time setup
 
-1. **npm account + token.** Create (or reuse) an npm account that owns
-   `@mergebrake/*` and the `mergebrake` package. Generate an **Automation**
-   token (`npm token create --type=automation`). Save it in the GitHub
-   repository under `Settings → Secrets and variables → Actions → New
-   repository secret` as `NPM_TOKEN`.
+1. **npm account + token.** Create (or reuse) an npm account that owns the
+   `mergebrake`, `mergebrake-core`, and `mergebrake-shared` packages. Generate
+   an **Automation** token (`npm token create --type=automation`). Save it in
+   the GitHub repository under `Settings → Secrets and variables → Actions →
+   New repository secret` as `NPM_TOKEN`.
 2. **Trusted Publisher (optional but recommended).** If you want full SLSA
    provenance, follow npm's [trusted publisher setup](https://docs.npmjs.com/trusted-publishers)
    so npm validates that the publish came from this repo's workflow. The
@@ -48,7 +48,7 @@ The release workflow picks the tag up and:
    and contains no `"*"` workspace deps.
 2. Re-runs `npm run build` and `npm test`.
 3. Runs `npm pack --dry-run` for each public package.
-4. Publishes in order: `@mergebrake/shared` → `@mergebrake/core` →
+4. Publishes in order: `mergebrake-shared` → `mergebrake-core` →
    `mergebrake`. (Inter-package deps require this order — npm registry caches
    propagate quickly enough that the next publish resolves the previous one.)
 5. Force-moves the major mobile tag (`v0` → `v0.0.3`) so
@@ -94,7 +94,9 @@ release.
 If the workflow fails *after* publishing one of the packages, the npm registry
 has the version already. Do not try to republish the same version. Instead:
 
-1. `npm deprecate @mergebrake/<pkg>@<version> "broken release, use <next>"`
+1. `npm deprecate <package>@<version> "broken release, use <next>"` for each
+   of `mergebrake`, `mergebrake-core`, `mergebrake-shared` that already
+   published.
 2. Bump to the next patch, run `release-prepare.mjs` again, push.
 
 If the workflow fails *before* any publish (typical for the

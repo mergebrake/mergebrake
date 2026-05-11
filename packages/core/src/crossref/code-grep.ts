@@ -1,7 +1,7 @@
 import fg from "fast-glob";
 import fs from "node:fs/promises";
 import path from "node:path";
-import type { CrossRef } from "@mergebrake/shared";
+import type { CrossRef } from "mergebrake-shared";
 
 export interface FindCrossReferencesOptions {
   repoRoot: string;

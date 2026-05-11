@@ -2,7 +2,7 @@ import type {
   Finding,
   OrmStack,
   DatabaseDialect,
-} from "@mergebrake/shared";
+} from "mergebrake-shared";
 import type { SqlBlock } from "../parsers/orm-sql-extractor.js";
 import { parsePostgres } from "../parsers/postgres-ast.js";
 

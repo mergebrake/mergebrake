@@ -1,4 +1,4 @@
-import type { Finding } from "@mergebrake/shared";
+import type { Finding } from "mergebrake-shared";
 import type { Rule, RuleContext } from "./index.js";
 import { splitStatements, matchRenameColumn } from "./sql-util.js";
 import { camelize, snakeize } from "../recipes/symbol-variants.js";

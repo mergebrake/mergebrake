@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { parseConfig } from "../src/config/parser.js";
 import { applyConfig } from "../src/config/apply.js";
-import type { Finding } from "@mergebrake/shared";
+import type { Finding } from "mergebrake-shared";
 
 function finding(opts: Partial<Finding> & Pick<Finding, "ruleId">): Finding {
   return {

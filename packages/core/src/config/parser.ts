@@ -1,5 +1,5 @@
 import { parse as parseYaml } from "yaml";
-import type { Severity } from "@mergebrake/shared";
+import type { Severity } from "mergebrake-shared";
 import {
   FAIL_ON_VALUES,
   SEVERITY_VALUES,

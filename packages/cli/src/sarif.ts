@@ -1,4 +1,4 @@
-import type { AnalysisReport, Finding, Severity } from "@mergebrake/shared";
+import type { AnalysisReport, Finding, Severity } from "mergebrake-shared";
 
 /**
  * SARIF 2.1.0 envelope produced by `mergebrake scan --format sarif`.

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { renderSarif } from "../src/sarif.js";
-import type { AnalysisReport } from "@mergebrake/shared";
+import type { AnalysisReport } from "mergebrake-shared";
 
 const baseReport: AnalysisReport = {
   verdict: "BLOCK",

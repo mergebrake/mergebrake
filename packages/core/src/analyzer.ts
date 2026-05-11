@@ -4,7 +4,7 @@ import type {
   OrmStack,
   DatabaseDialect,
   AiPrSignals,
-} from "@mergebrake/shared";
+} from "mergebrake-shared";
 import { detectOrmStack } from "./parsers/orm-detector.js";
 import { extractSqlFromOrm } from "./parsers/orm-sql-extractor.js";
 import { runRules } from "./rules/index.js";

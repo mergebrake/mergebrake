@@ -18,8 +18,8 @@
     "start": "node dist/cli.js"
   },
   "dependencies": {
-    "@mergebrake/core": "*",
-    "@mergebrake/shared": "*",
+    "mergebrake-core": "*",
+    "mergebrake-shared": "*",
     "commander": "^12.1.0",
     "picocolors": "^1.0.1"
   },
