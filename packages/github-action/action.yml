@@ -58,6 +58,14 @@ inputs:
     description: 'Emit GitHub `::error` / `::warning` annotations alongside the sticky comment (true|false).'
     required: false
     default: 'true'
+  sarif-file:
+    description: 'When set, also write a SARIF 2.1.0 report to this path. Combine with `github/codeql-action/upload-sarif@v3` to surface findings in GitHub Code Scanning.'
+    required: false
+    default: ''
+  config:
+    description: 'Optional path to a `.mergebrake.yml` config file. If omitted, MergeBrake auto-discovers one in the repository root.'
+    required: false
+    default: ''
 
 outputs:
   verdict:
@@ -69,6 +77,9 @@ outputs:
   finding-count:
     description: Number of findings reported by MergeBrake.
     value: ${{ steps.scan.outputs.finding-count }}
+  sarif-file:
+    description: 'Absolute path to the SARIF 2.1.0 report (set only when `sarif-file` input is non-empty).'
+    value: ${{ steps.scan.outputs.sarif-file }}
   comment-action:
     description: 'Action performed for the sticky comment: created | updated | skipped.'
     value: ${{ steps.comment.outputs.action }}
@@ -106,12 +117,16 @@ runs:
         MERGEBRAKE_BASE_REPO: ${{ inputs.base-repo }}
         MERGEBRAKE_SCAN_SCOPE: ${{ inputs.scan-scope }}
         MERGEBRAKE_ANNOTATIONS: ${{ inputs.output-annotations }}
+        MERGEBRAKE_SARIF_FILE: ${{ inputs.sarif-file }}
+        MERGEBRAKE_CONFIG: ${{ inputs.config }}
       run: |
         set -o pipefail
         ORM_FLAG=""
         if [ -n "${MERGEBRAKE_ORM}" ]; then ORM_FLAG="--orm ${MERGEBRAKE_ORM}"; fi
         BASE_REPO_FLAG=""
         if [ -n "${MERGEBRAKE_BASE_REPO}" ]; then BASE_REPO_FLAG="--base-repo ${MERGEBRAKE_BASE_REPO}"; fi
+        CONFIG_FLAG=""
+        if [ -n "${MERGEBRAKE_CONFIG}" ]; then CONFIG_FLAG="--config ${MERGEBRAKE_CONFIG}"; fi
         CHANGED_FLAG=""
         if [ "${MERGEBRAKE_SCAN_SCOPE}" = "changed" ] && [ -n "${GITHUB_BASE_REF:-}" ]; then
           CHANGED_FLAG="--changed-since origin/${GITHUB_BASE_REF}"
@@ -129,6 +144,7 @@ runs:
           --fail-on SAFE \
           ${ORM_FLAG} \
           ${BASE_REPO_FLAG} \
+          ${CONFIG_FLAG} \
           ${CHANGED_FLAG} \
           > /tmp/mergebrake-report.json 2>/tmp/mergebrake-scan.err \
           || true  # never fail this step; failure policy is enforced below
@@ -158,8 +174,28 @@ runs:
             --fail-on SAFE \
             ${ORM_FLAG} \
             ${BASE_REPO_FLAG} \
+            ${CONFIG_FLAG} \
             ${CHANGED_FLAG} \
             || true
+        fi
+
+        if [ -n "${MERGEBRAKE_SARIF_FILE}" ]; then
+          npx --yes "mergebrake@${MERGEBRAKE_VERSION}" scan ${MERGEBRAKE_INPUTS} \
+            --dialect "${MERGEBRAKE_DIALECT}" \
+            --format sarif \
+            --commits /tmp/mergebrake-commits.txt \
+            --fail-on SAFE \
+            ${ORM_FLAG} \
+            ${BASE_REPO_FLAG} \
+            ${CONFIG_FLAG} \
+            ${CHANGED_FLAG} \
+            > "${MERGEBRAKE_SARIF_FILE}" || true
+          if [ -s "${MERGEBRAKE_SARIF_FILE}" ]; then
+            echo "sarif-file=${MERGEBRAKE_SARIF_FILE}" >> "${GITHUB_OUTPUT}"
+            echo "Wrote SARIF report to ${MERGEBRAKE_SARIF_FILE}"
+          else
+            echo "SARIF report at ${MERGEBRAKE_SARIF_FILE} is empty — check the scan logs above." >&2
+          fi
         fi
 
     - name: Post sticky PR comment

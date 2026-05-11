@@ -68,13 +68,57 @@ keeps the first install from failing on years of historical migrations. Set
 | `github-token` | `${{ github.token }}` | Token used to post the sticky comment. |
 | `mergebrake-version` | `latest` | Pin the `mergebrake` npm version. |
 | `output-annotations` | `true` | Also emit inline `::error` / `::warning` annotations. |
+| `sarif-file` | _empty_ | Write a SARIF 2.1.0 report to this path for `github/codeql-action/upload-sarif`. |
+| `config` | _empty_ | Explicit path to a `.mergebrake.yml`. Auto-discovered when omitted. |
 
 ## Outputs
 
 - `verdict`: `SAFE` \| `EXPAND_CONTRACT` \| `BLOCK`.
 - `risk-score`: aggregated risk number used to derive the verdict.
 - `finding-count`: number of findings reported.
+- `sarif-file`: absolute path to the SARIF report when `sarif-file` input is set.
 - `comment-action`: `created`, `updated`, or `skipped` for the sticky PR comment.
+
+## Uploading findings to GitHub Code Scanning
+
+```yaml
+permissions:
+  contents: read
+  pull-requests: write
+  security-events: write   # required by upload-sarif
+
+jobs:
+  schema-impact:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: mergebrake/mergebrake@v0
+        with:
+          fail-on: BLOCK
+          sarif-file: mergebrake.sarif
+      - uses: github/codeql-action/upload-sarif@v3
+        if: always()    # upload even when MergeBrake fails the check
+        with:
+          sarif_file: mergebrake.sarif
+          category: mergebrake
+```
+
+Findings then appear in **Security › Code scanning** with the same severity
+mapping the sticky comment uses.
+
+## Configuration file
+
+Drop a `.mergebrake.yml` at the repository root and the action will pick it
+up automatically. See [`.mergebrake.example.yml`](../../.mergebrake.example.yml)
+for the full annotated example. To use a non-default path:
+
+```yaml
+- uses: mergebrake/mergebrake@v0
+  with:
+    config: ops/mergebrake-prod.yml
+```
 
 ## Running multiple times on the same PR
 

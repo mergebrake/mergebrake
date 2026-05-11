@@ -6,3 +6,13 @@ export { findCrossReferences } from "./crossref/code-grep.js";
 export { rules } from "./rules/index.js";
 export { computeVerdict } from "./verdict.js";
 export type { AnalyzerOptions } from "./analyzer.js";
+export {
+  loadConfig,
+  parseConfig,
+  applyConfig,
+  CONFIG_FILE_NAMES,
+} from "./config/index.js";
+export type {
+  MergeBrakeConfig,
+  MergeBrakeOverride,
+} from "./config/index.js";

@@ -172,6 +172,38 @@ The comment is identified across runs by a hidden marker
 (`<!-- mergebrake:sticky-comment -->`). Use `--marker mergebrake:something` to
 post multiple independent sticky comments on the same PR.
 
+## Configuration (`.mergebrake.yml`)
+
+Drop a `.mergebrake.yml` at the repository root and MergeBrake will pick it
+up automatically (both the CLI and the GitHub Action). Every field is optional.
+A full annotated example lives at [`.mergebrake.example.yml`](./.mergebrake.example.yml).
+
+```yaml
+version: 1
+fail-on: BLOCK
+
+# Disable specific rules globally
+ignore:
+  - safety/alter-enum-add-value
+
+# Tweak severity without disabling the rule
+severity:
+  locking/add-foreign-key-without-not-valid: medium
+
+# Drop findings on historical migration paths
+ignore-paths:
+  - "prisma/migrations/2022*/**"
+
+# Scoped overrides — first matching block wins
+overrides:
+  - paths: ["prisma/migrations/legacy/**"]
+    ignore: ["locking/create-index-non-concurrent"]
+```
+
+CLI flags always win over config; the config wins over built-in defaults.
+Use `--config <path>` to point MergeBrake at a different file, or `--no-config`
+to disable auto-discovery.
+
 ## Output Formats
 
 | Flag | Use case |
@@ -180,6 +212,23 @@ post multiple independent sticky comments on the same PR.
 | `--format markdown` | Paste into a PR comment. |
 | `--format github` | GitHub Actions annotations plus Markdown. |
 | `--format json` | Pipe into custom tooling. |
+| `--format sarif` | [SARIF 2.1.0](https://docs.oasis-open.org/sarif/sarif/v2.1.0/) for GitHub Code Scanning / IDE integrations. |
+
+### Upload SARIF to GitHub Code Scanning
+
+```yaml
+- uses: mergebrake/mergebrake@v0
+  with:
+    sarif-file: mergebrake.sarif
+- uses: github/codeql-action/upload-sarif@v3
+  if: always()
+  with:
+    sarif_file: mergebrake.sarif
+    category: mergebrake
+```
+
+Findings then surface in the **Security › Code scanning** tab and inline in
+the PR diff, with the same severity mapping the sticky comment uses.
 
 ## Fail Policy
 

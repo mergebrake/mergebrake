@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 import { Command } from "commander";
-import { analyzeMigration } from "@mergebrake/core";
+import { analyzeMigration, loadConfig } from "@mergebrake/core";
 import type { AnalysisReport } from "@mergebrake/shared";
 import { renderMarkdown, renderTerminal, renderJson } from "./renderers.js";
+import { renderSarif } from "./sarif.js";
 import { appendFile, readFile } from "node:fs/promises";
 import path from "node:path";
 import {
@@ -35,7 +36,7 @@ program
   )
   .option(
     "-f, --format <format>",
-    "Output format: terminal, markdown, json, github",
+    "Output format: terminal, markdown, json, github, sarif",
     "terminal",
   )
   .option("--orm <stack>", "Force ORM stack: prisma|drizzle|knex|sequelize|typeorm|raw-sql")
@@ -46,7 +47,12 @@ program
     "Only scan input files changed since a git ref (e.g. origin/main).",
   )
   .option("--skip-cross-ref", "Skip cross-surface code grep (faster, less useful)")
-  .option("--fail-on <verdict>", "Exit non-zero when verdict matches: BLOCK|EXPAND_CONTRACT|SAFE", "BLOCK")
+  .option(
+    "--config <path>",
+    "Path to a .mergebrake.yml file. Defaults to auto-discovery from --repo.",
+  )
+  .option("--no-config", "Disable .mergebrake.yml auto-discovery.")
+  .option("--fail-on <verdict>", "Exit non-zero when verdict matches: BLOCK|EXPAND_CONTRACT|SAFE")
   .action(async (inputs: string[], options) => {
     const commitMessages = options.commits
       ? (await readFile(path.resolve(options.commits), "utf-8"))
@@ -64,6 +70,30 @@ program
         })
       : inputs;
 
+    // Load .mergebrake.yml unless explicitly disabled.
+    let loadedConfig: Awaited<ReturnType<typeof loadConfig>> = {
+      config: {},
+      source: null,
+      warnings: [],
+    };
+    if (options.config !== false) {
+      const explicit =
+        typeof options.config === "string" ? options.config : undefined;
+      const opts: Parameters<typeof loadConfig>[0] = { repoRoot };
+      if (explicit) opts.explicitPath = explicit;
+      loadedConfig = await loadConfig(opts);
+      if (loadedConfig.source) {
+        // eslint-disable-next-line no-console
+        console.error(
+          `mergebrake: loaded config from ${path.relative(repoRoot, loadedConfig.source) || loadedConfig.source}`,
+        );
+      }
+      for (const w of loadedConfig.warnings) {
+        // eslint-disable-next-line no-console
+        console.error(`mergebrake: config warning: ${w}`);
+      }
+    }
+
     const analysisOptions = {
       repoRoot,
       inputs: scanInputs,
@@ -71,6 +101,7 @@ program
       ormStack: options.orm,
       dialect: options.dialect,
       skipCrossRef: options.skipCrossRef === true,
+      config: loadedConfig.config,
     };
     if (options.baseRepo) {
       Object.assign(analysisOptions, {
@@ -90,13 +121,21 @@ program
       case "github":
         process.stdout.write(renderMarkdown(report, { githubAnnotations: true }));
         break;
+      case "sarif":
+        process.stdout.write(renderSarif(report));
+        break;
       case "terminal":
       default:
         process.stdout.write(renderTerminal(report));
         break;
     }
 
-    const failOn = String(options.failOn).toUpperCase();
+    // Precedence: CLI > config > default "BLOCK".
+    const failOnRaw: string =
+      typeof options.failOn === "string" && options.failOn.length > 0
+        ? options.failOn
+        : (loadedConfig.config.failOn ?? "BLOCK");
+    const failOn = failOnRaw.toUpperCase();
     if (failOn === "BLOCK" && report.verdict === "BLOCK") process.exit(1);
     if (failOn === "EXPAND_CONTRACT" && report.verdict !== "SAFE") process.exit(1);
     if (failOn === "SAFE") {

@@ -1,0 +1,50 @@
+# MergeBrake configuration. Drop this file at the repository root as
+# `.mergebrake.yml` and the CLI / GitHub Action will pick it up automatically.
+#
+# Every field is optional. The CLI flags always win over the config; the config
+# wins over MergeBrake's built-in defaults.
+
+version: 1
+
+# Verdict that should fail the workflow. CLI `--fail-on` overrides this.
+fail-on: BLOCK    # SAFE | EXPAND_CONTRACT | BLOCK
+
+# Disable specific rules globally. Use sparingly — most rules earn their keep.
+ignore:
+  - safety/alter-enum-add-value      # tolerate Prismas default `ALTER TYPE ADD VALUE`
+  # - locking/create-index-non-concurrent
+
+# Globally tweak severity (without disabling the rule).
+severity:
+  locking/add-foreign-key-without-not-valid: medium
+  destructive/rename-column: high
+
+# Drop findings whose location matches any of these globs. Useful when you
+# adopt MergeBrake on a repo with years of historical migrations.
+ignore-paths:
+  - "prisma/migrations/2022*/**"
+  - "prisma/migrations/initial_baseline/**"
+
+# Per-path overrides. First matching block wins.
+overrides:
+  - paths:
+      - "prisma/migrations/legacy/**"
+    ignore:
+      - locking/create-index-non-concurrent
+      - locking/add-foreign-key-without-not-valid
+  - paths:
+      - "prisma/migrations/20240101_seed/**"
+    severity:
+      destructive/drop-column: medium
+
+# Default scan scope inside the GitHub Action: `changed` (PR-only files) or
+# `all` (full input glob).
+scan-scope: changed
+
+# Tune the cross-reference grep.
+cross-ref:
+  # Replace the default glob set. Useful for monorepos with non-standard layout.
+  # globs:
+  #   - "apps/web/src/**/*.{ts,tsx}"
+  #   - "apps/api/src/**/*.{ts,sql}"
+  max-matches-per-symbol: 12

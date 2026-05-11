@@ -15,6 +15,8 @@ import {
   buildSchemaSymbolIndex,
   expandSymbolsWithSchema,
 } from "./impact/schema-symbols.js";
+import { applyConfig } from "./config/apply.js";
+import type { MergeBrakeConfig } from "./config/types.js";
 
 export interface AnalyzerOptions {
   /** Absolute path to the repository root (used for cross-surface code grep). */
@@ -31,6 +33,12 @@ export interface AnalyzerOptions {
   dialect?: DatabaseDialect;
   /** Disable cross-surface code grep (faster but loses key feature). */
   skipCrossRef?: boolean;
+  /**
+   * Optional MergeBrake configuration to apply post-rules. Pass the parsed
+   * object from `loadConfig`; the analyzer takes care of filtering findings
+   * and applying severity overrides before the verdict is computed.
+   */
+  config?: MergeBrakeConfig;
 }
 
 export async function analyzeMigration(
@@ -95,15 +103,19 @@ export async function analyzeMigration(
     }
   }
 
+  const filteredFindings = opts.config
+    ? applyConfig({ findings, config: opts.config })
+    : findings;
+
   const { verdict, riskScore } = computeVerdict({
-    findings,
+    findings: filteredFindings,
     aiPrSignals,
   });
 
   return {
     verdict,
     riskScore,
-    findings,
+    findings: filteredFindings,
     aiPrSignals,
     ormStack,
     dialect,

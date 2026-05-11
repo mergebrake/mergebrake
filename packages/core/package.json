@@ -22,7 +22,8 @@
   "dependencies": {
     "@mergebrake/shared": "*",
     "fast-glob": "^3.3.2",
-    "libpg-query": "^17.7.3"
+    "libpg-query": "^17.7.3",
+    "yaml": "^2.9.0"
   },
   "license": "MIT"
 }
