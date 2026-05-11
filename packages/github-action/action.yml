@@ -30,6 +30,10 @@ inputs:
     description: Optional path to a base-branch checkout. Enables deploy-order checks for contract changes bundled with app cleanup.
     required: false
     default: ''
+  scan-scope:
+    description: 'Files to scan in pull_request workflows: changed | all. `changed` scans only migration files touched by the PR; `all` audits the full input glob.'
+    required: false
+    default: changed
   sticky-comment:
     description: 'Post (or update) a sticky review comment on the pull request. Requires `permissions: pull-requests: write` and a token with that scope (default `${{ github.token }}`).'
     required: false
@@ -100,6 +104,7 @@ runs:
         MERGEBRAKE_FAIL_ON: ${{ inputs.fail-on }}
         MERGEBRAKE_ORM: ${{ inputs.orm }}
         MERGEBRAKE_BASE_REPO: ${{ inputs.base-repo }}
+        MERGEBRAKE_SCAN_SCOPE: ${{ inputs.scan-scope }}
         MERGEBRAKE_ANNOTATIONS: ${{ inputs.output-annotations }}
       run: |
         set -o pipefail
@@ -107,6 +112,13 @@ runs:
         if [ -n "${MERGEBRAKE_ORM}" ]; then ORM_FLAG="--orm ${MERGEBRAKE_ORM}"; fi
         BASE_REPO_FLAG=""
         if [ -n "${MERGEBRAKE_BASE_REPO}" ]; then BASE_REPO_FLAG="--base-repo ${MERGEBRAKE_BASE_REPO}"; fi
+        CHANGED_FLAG=""
+        if [ "${MERGEBRAKE_SCAN_SCOPE}" = "changed" ] && [ -n "${GITHUB_BASE_REF:-}" ]; then
+          CHANGED_FLAG="--changed-since origin/${GITHUB_BASE_REF}"
+        elif [ "${MERGEBRAKE_SCAN_SCOPE}" != "changed" ] && [ "${MERGEBRAKE_SCAN_SCOPE}" != "all" ]; then
+          echo "Unknown scan-scope value: ${MERGEBRAKE_SCAN_SCOPE}" >&2
+          exit 2
+        fi
 
         # Always produce a JSON report for the comment step; the exit code is
         # carried by a separate invocation that respects `fail-on`.
@@ -117,6 +129,7 @@ runs:
           --fail-on SAFE \
           ${ORM_FLAG} \
           ${BASE_REPO_FLAG} \
+          ${CHANGED_FLAG} \
           > /tmp/mergebrake-report.json 2>/tmp/mergebrake-scan.err \
           || true  # never fail this step; failure policy is enforced below
 
@@ -145,6 +158,7 @@ runs:
             --fail-on SAFE \
             ${ORM_FLAG} \
             ${BASE_REPO_FLAG} \
+            ${CHANGED_FLAG} \
             || true
         fi
 

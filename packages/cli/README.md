@@ -9,6 +9,13 @@ npx mergebrake scan "prisma/migrations/**/migration.sql" \
   --commits ./.git/COMMIT_EDITMSG
 ```
 
+For PR-style checks, scan only migration files changed since the base branch:
+
+```bash
+npx mergebrake scan "prisma/migrations/**/migration.sql" \
+  --changed-since origin/main
+```
+
 For deploy-order checks, compare the PR checkout with a base-branch checkout:
 
 ```bash

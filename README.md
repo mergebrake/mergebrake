@@ -94,6 +94,14 @@ mergebrake scan "drizzle/**/*.sql"
 mergebrake scan db/migrate --dialect postgres
 ```
 
+For pull-request-style local checks, scan only migration files changed since a
+base ref:
+
+```bash
+mergebrake scan "prisma/migrations/**/migration.sql" \
+  --changed-since origin/main
+```
+
 ### Base/Head Deploy-Order Check
 
 If you can provide a checkout of the base branch, MergeBrake can find app
@@ -113,7 +121,9 @@ instances during rollout.
 
 The bundled action posts a **sticky review comment** that updates on every push
 (no more comment spam), emits inline annotations, and enforces a configurable
-fail policy. Drop one workflow file into your repo:
+fail policy. Pull request runs scan changed migration files by default, so the
+first install does not fail on years of historical migration debt. Drop one
+workflow file into your repo:
 
 ```yaml
 # .github/workflows/mergebrake.yml

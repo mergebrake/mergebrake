@@ -10,6 +10,7 @@ import {
   resolvePrNumber,
   DEFAULT_STICKY_MARKER,
 } from "./github-comment.js";
+import { resolveChangedInputs } from "./changed-inputs.js";
 
 const program = new Command();
 
@@ -40,6 +41,10 @@ program
   .option("--orm <stack>", "Force ORM stack: prisma|drizzle|knex|sequelize|typeorm|raw-sql")
   .option("--dialect <dialect>", "Force DB dialect: postgres|mysql|sqlite", "postgres")
   .option("--commits <file>", "Path to a file with commit messages (one per line) for AI-PR detection")
+  .option(
+    "--changed-since <ref>",
+    "Only scan input files changed since a git ref (e.g. origin/main).",
+  )
   .option("--skip-cross-ref", "Skip cross-surface code grep (faster, less useful)")
   .option("--fail-on <verdict>", "Exit non-zero when verdict matches: BLOCK|EXPAND_CONTRACT|SAFE", "BLOCK")
   .action(async (inputs: string[], options) => {
@@ -50,9 +55,18 @@ program
           .filter(Boolean)
       : [];
 
+    const repoRoot = path.resolve(options.repo);
+    const scanInputs = options.changedSince
+      ? await resolveChangedInputs({
+          repoRoot,
+          inputs,
+          ref: String(options.changedSince),
+        })
+      : inputs;
+
     const analysisOptions = {
-      repoRoot: path.resolve(options.repo),
-      inputs,
+      repoRoot,
+      inputs: scanInputs,
       commitMessages,
       ormStack: options.orm,
       dialect: options.dialect,

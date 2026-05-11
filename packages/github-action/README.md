@@ -38,6 +38,10 @@ jobs:
 The first run posts a new comment on the PR. Every push to the same PR updates
 the same comment in place — no comment spam.
 
+By default, pull request runs scan only migration files changed in that PR. This
+keeps the first install from failing on years of historical migrations. Set
+`scan-scope: all` when you intentionally want a full repository audit.
+
 ## What the comment shows
 
 - the verdict (`SAFE` 🟢 / `EXPAND_CONTRACT` 🟡 / `BLOCK` 🔴) and the risk score;
@@ -57,6 +61,7 @@ the same comment in place — no comment spam.
 | `dialect` | `postgres` | `postgres` \| `mysql` \| `sqlite`. |
 | `orm` | (auto) | Override ORM detection: `prisma`, `drizzle`, `knex`, `sequelize`, `typeorm`, `raw-sql`. |
 | `base-repo` | _empty_ | Path to a base-branch checkout (enables deploy-order checks). |
+| `scan-scope` | `changed` | `changed` scans only migration files touched by the PR; `all` scans the full input glob. |
 | `sticky-comment` | `true` | Post or update a sticky PR comment. |
 | `comment-marker` | `mergebrake:sticky-comment` | Hidden marker used to find the comment on subsequent runs. |
 | `skip-comment-when-safe` | `false` | Do not comment when the verdict is `SAFE` with zero findings. |
@@ -69,7 +74,7 @@ the same comment in place — no comment spam.
 - `verdict`: `SAFE` \| `EXPAND_CONTRACT` \| `BLOCK`.
 - `risk-score`: aggregated risk number used to derive the verdict.
 - `finding-count`: number of findings reported.
-- `comment-action`: `posted` when a sticky comment step ran (or empty when skipped).
+- `comment-action`: `created`, `updated`, or `skipped` for the sticky PR comment.
 
 ## Running multiple times on the same PR
 
