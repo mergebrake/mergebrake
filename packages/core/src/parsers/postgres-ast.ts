@@ -332,6 +332,33 @@ export function funcCallName(f?: FuncCall): string {
 }
 
 /**
+ * Walk a small expression subtree and return the first function call name.
+ * Defaults may be wrapped in TypeCast/A_Expr nodes, so rule files should not
+ * assume `cmd.def.FuncCall` is always the top-level shape.
+ */
+export function funcCallNameFromNode(node: unknown): string {
+  if (!node || typeof node !== "object") return "";
+  const record = node as Record<string, unknown>;
+  const direct = (record["FuncCall"] as FuncCall | undefined) ?? undefined;
+  const directName = funcCallName(direct);
+  if (directName) return directName;
+
+  for (const value of Object.values(record)) {
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        const nested = funcCallNameFromNode(item);
+        if (nested) return nested;
+      }
+      continue;
+    }
+    const nested = funcCallNameFromNode(value);
+    if (nested) return nested;
+  }
+
+  return "";
+}
+
+/**
  * Returns the set of column constraint types declared inline on a ColumnDef.
  */
 export function columnInlineConstraints(col: ColumnDef): Set<ConstraintType> {
@@ -343,16 +370,29 @@ export function columnInlineConstraints(col: ColumnDef): Set<ConstraintType> {
 }
 
 /**
- * Postgres functions considered "volatile" for the purposes of column defaults.
- * Setting a volatile default on an existing NOT NULL column forces a table
- * rewrite (in Postgres < 11 always, and even in 11+ when the default isn't
- * folded to a constant). Reviewers should know.
+ * Function defaults worth surfacing in reviews. This intentionally includes
+ * stable time functions such as now()/current_timestamp: they may not rewrite a
+ * table on modern Postgres, but they still deserve an explicit deploy review.
  */
 export const VOLATILE_FUNC_NAMES = new Set([
   "now",
   "current_timestamp",
   "clock_timestamp",
   "transaction_timestamp",
+  "random",
+  "gen_random_uuid",
+  "uuid_generate_v1",
+  "uuid_generate_v1mc",
+  "uuid_generate_v4",
+  "nextval",
+]);
+
+/**
+ * Known volatile defaults that cannot use Postgres' fast-default path when
+ * added to an existing table, so every existing row must be materialized.
+ */
+export const TABLE_REWRITE_DEFAULT_FUNC_NAMES = new Set([
+  "clock_timestamp",
   "random",
   "gen_random_uuid",
   "uuid_generate_v1",

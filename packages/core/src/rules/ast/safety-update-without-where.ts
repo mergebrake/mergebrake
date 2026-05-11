@@ -29,28 +29,24 @@ export const astUpdateWithoutWhere: AstRule = {
           `updated atomically, add a \`WHERE\` clause that documents intent.`,
         affectedSymbols: [table],
         recipe: {
-          summary: `Batch the backfill in chunks; commit each chunk.`,
+          summary: `Batch the backfill in chunks; let the runner commit between chunks.`,
           steps: [
             {
               phase: "migrate-data",
-              description: `Use a key-window batch loop instead of a single statement. Commit between batches.`,
+              description: `Run this statement repeatedly outside the schema migration transaction until it updates zero rows.`,
               sql:
-                `-- Example batched backfill (run outside the migration transaction)\n` +
-                `DO $$\n` +
-                `DECLARE\n` +
-                `  last_id bigint := 0;\n` +
-                `  affected int;\n` +
-                `BEGIN\n` +
-                `  LOOP\n` +
-                `    UPDATE ${table}\n` +
-                `      SET <column> = <value>\n` +
-                `    WHERE id > last_id AND id <= last_id + 5000;\n` +
-                `    GET DIAGNOSTICS affected = ROW_COUNT;\n` +
-                `    EXIT WHEN affected = 0;\n` +
-                `    last_id := last_id + 5000;\n` +
-                `    COMMIT;\n` +
-                `  END LOOP;\n` +
-                `END$$;`,
+                `-- Example batched backfill. Run repeatedly; do not wrap the loop\n` +
+                `-- in a migration transaction.\n` +
+                `WITH batch AS (\n` +
+                `  SELECT ctid\n` +
+                `  FROM ${table}\n` +
+                `  WHERE <condition>\n` +
+                `  LIMIT 5000\n` +
+                `)\n` +
+                `UPDATE ${table} AS target\n` +
+                `SET <column> = <value>\n` +
+                `FROM batch\n` +
+                `WHERE target.ctid = batch.ctid;`,
             },
           ],
         },

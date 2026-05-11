@@ -209,7 +209,7 @@ to a regex linter that covers the destructive family.
 ### Safety / data
 | Rule ID | Severity | Detects |
 |---|---|---|
-| `safety/set-default-volatile` | medium | `SET DEFAULT now()` / `gen_random_uuid()` / volatile funcs |
+| `safety/set-default-volatile` | medium / high | `ALTER/ADD COLUMN ... DEFAULT now()` / `gen_random_uuid()` / generated defaults |
 | `safety/update-without-where` | high | `UPDATE` with no `WHERE` (unbounded backfill in one transaction) |
 | `safety/alter-enum-rename-value` | high | `ALTER TYPE ... RENAME VALUE` (silent app-code break) |
 | `safety/alter-enum-add-value` | low | `ALTER TYPE ... ADD VALUE` (commit-in-transaction caveat) |

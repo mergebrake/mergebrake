@@ -210,13 +210,14 @@ describe("AST rule engine — Postgres dialect", () => {
   });
 
   describe("safety/set-default-volatile", () => {
-    it("flags now() as default", async () => {
+    it("flags ALTER COLUMN SET DEFAULT now() without claiming a rewrite", async () => {
       const findings = await scan(
         `ALTER TABLE sessions ALTER COLUMN created_at SET DEFAULT now();`,
       );
-      expect(
-        findings.find((x) => x.ruleId === "safety/set-default-volatile"),
-      ).toBeDefined();
+      const f = findings.find((x) => x.ruleId === "safety/set-default-volatile");
+      expect(f).toBeDefined();
+      expect(f!.severity).toBe("medium");
+      expect(f!.message).toMatch(/does not rewrite existing rows/);
     });
 
     it("flags gen_random_uuid", async () => {
@@ -226,6 +227,26 @@ describe("AST rule engine — Postgres dialect", () => {
       expect(
         findings.find((x) => x.ruleId === "safety/set-default-volatile"),
       ).toBeDefined();
+    });
+
+    it("flags ADD COLUMN with a volatile function default as high risk", async () => {
+      const findings = await scan(
+        `ALTER TABLE users ADD COLUMN id uuid DEFAULT gen_random_uuid();`,
+      );
+      const f = findings.find((x) => x.ruleId === "safety/set-default-volatile");
+      expect(f).toBeDefined();
+      expect(f!.severity).toBe("high");
+      expect(f!.affectedSymbols).toContain("users.id");
+    });
+
+    it("flags ADD COLUMN with now() as medium deploy-sensitive behavior", async () => {
+      const findings = await scan(
+        `ALTER TABLE users ADD COLUMN created_at timestamptz DEFAULT now();`,
+      );
+      const f = findings.find((x) => x.ruleId === "safety/set-default-volatile");
+      expect(f).toBeDefined();
+      expect(f!.severity).toBe("medium");
+      expect(f!.message).toMatch(/migration-time generated value/);
     });
   });
 
@@ -242,14 +263,23 @@ describe("AST rule engine — Postgres dialect", () => {
       const f = findings.find((x) => x.ruleId === "destructive/truncate");
       expect(f!.title).toMatch(/CASCADE/);
     });
+
+    it("keeps schema-qualified table names", async () => {
+      const findings = await scan(`TRUNCATE TABLE public.logs;`);
+      const f = findings.find((x) => x.ruleId === "destructive/truncate");
+      expect(f).toBeDefined();
+      expect(f!.affectedSymbols).toContain("public.logs");
+      expect(f!.title).toContain("public.logs");
+    });
   });
 
   describe("safety/update-without-where", () => {
     it("flags UPDATE without WHERE", async () => {
       const findings = await scan(`UPDATE users SET legacy = TRUE;`);
-      expect(
-        findings.find((x) => x.ruleId === "safety/update-without-where"),
-      ).toBeDefined();
+      const f = findings.find((x) => x.ruleId === "safety/update-without-where");
+      expect(f).toBeDefined();
+      const sql = f!.recipe?.steps[0]?.sql ?? "";
+      expect(sql).not.toMatch(/\bCOMMIT\b/);
     });
 
     it("does not flag UPDATE with WHERE", async () => {

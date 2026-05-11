@@ -31,4 +31,30 @@ describe("findCrossReferences", () => {
       line: 1,
     });
   });
+
+  it("ignores inline and block comments without hiding real code refs", async () => {
+    const repoRoot = await mkdtemp(path.join(os.tmpdir(), "mergebrake-comments-"));
+    await mkdir(path.join(repoRoot, "src"), { recursive: true });
+    await writeFile(
+      path.join(repoRoot, "src", "users.ts"),
+      `
+// full_name should not count
+const selected = user.fullName; // full_name should not count either
+/*
+full_name inside a block comment should not count
+*/
+const query = "SELECT full_name FROM users";
+`,
+    );
+
+    const refs = await findCrossReferences({
+      repoRoot,
+      symbols: ["full_name", "fullName"],
+    });
+
+    expect(refs.map((ref) => ref.line).sort((a, b) => a - b)).toEqual([3, 7]);
+    expect(refs.map((ref) => ref.snippet)).not.toContain(
+      "full_name inside a block comment should not count",
+    );
+  });
 });

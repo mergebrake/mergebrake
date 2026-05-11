@@ -3,7 +3,7 @@ import { Command } from "commander";
 import { analyzeMigration } from "@mergebrake/core";
 import type { AnalysisReport } from "@mergebrake/shared";
 import { renderMarkdown, renderTerminal, renderJson } from "./renderers.js";
-import { readFile } from "node:fs/promises";
+import { appendFile, readFile } from "node:fs/promises";
 import path from "node:path";
 import {
   postStickyComment,
@@ -112,6 +112,7 @@ program
     "--skip-when-safe",
     "Do not post a comment when the verdict is SAFE with zero findings (useful for noisy repos).",
   )
+  .option("--github-output", "Write comment metadata to $GITHUB_OUTPUT.")
   .option("--dry-run", "Print the body that would be posted and exit.")
   .action(async (options) => {
     const report = await loadReport({
@@ -126,6 +127,9 @@ program
     ) {
       // eslint-disable-next-line no-console
       console.error("mergebrake comment: verdict SAFE, skip-when-safe set, nothing to post.");
+      if (options.githubOutput) {
+        await writeGithubOutput({ action: "skipped" });
+      }
       return;
     }
 
@@ -179,6 +183,14 @@ program
       apiBase: options.apiBase,
     });
 
+    if (options.githubOutput) {
+      await writeGithubOutput({
+        action: result.action,
+        "comment-id": result.commentId,
+        "comment-url": result.htmlUrl,
+      });
+    }
+
     // eslint-disable-next-line no-console
     console.error(
       `mergebrake comment: ${result.action} comment` +
@@ -193,15 +205,20 @@ async function loadReport(opts: {
 }): Promise<AnalysisReport> {
   if (opts.fromFile) {
     const raw = await readFile(path.resolve(opts.fromFile), "utf-8");
-    return JSON.parse(raw) as AnalysisReport;
+    return parseReportJson(raw);
   }
   if (opts.fromStdin) {
     const raw = await readStdin();
-    return JSON.parse(raw) as AnalysisReport;
+    return parseReportJson(raw);
   }
   throw new Error(
     "mergebrake comment: provide --from-file <path> or --from-stdin to load the report.",
   );
+}
+
+function parseReportJson(raw: string): AnalysisReport {
+  const withoutBom = raw.charCodeAt(0) === 0xfeff ? raw.slice(1) : raw;
+  return JSON.parse(withoutBom) as AnalysisReport;
 }
 
 function readStdin(): Promise<string> {
@@ -213,6 +230,18 @@ function readStdin(): Promise<string> {
     );
     process.stdin.on("error", reject);
   });
+}
+
+async function writeGithubOutput(
+  values: Record<string, string | number | undefined>,
+): Promise<void> {
+  const outputPath = process.env["GITHUB_OUTPUT"];
+  if (!outputPath) return;
+  const lines = Object.entries(values)
+    .filter((entry): entry is [string, string | number] => entry[1] !== undefined)
+    .map(([key, value]) => `${key}=${String(value)}`);
+  if (lines.length === 0) return;
+  await appendFile(outputPath, `${lines.join("\n")}\n`, "utf-8");
 }
 
 program.parseAsync().catch((err) => {

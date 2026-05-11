@@ -27,14 +27,14 @@ in [`examples/dogfood/`](./examples/dogfood/README.md).
 
 ## Why I started
 
-In the last six months, three different "AI agent deleted my database"
-stories went viral:
+In the last year, the pattern became hard to ignore:
 
 - A Cursor + Claude Opus 4.6 agent dropped the entire **PocketOS** production
   database — backups included — in a single Railway API call.
 - Replit's AI agent wiped SaaStr founder Jason Lemkin's production database.
-- Anthropic's own Claude Code logged a March 2026 incident where it ran
-  `prisma migrate reset --force` on a dev DB without consent.
+- Prisma added explicit AI-agent guardrails for destructive commands such as
+  `prisma migrate reset --force`, with Claude Code, Cursor, Gemini CLI, Aider,
+  and Replit called out in the official docs.
 
 These are the spectacular ones. The boring ones are far more common: an agent
 drops a column from a Prisma schema and the application keeps reading it via
@@ -148,9 +148,9 @@ I'd love feedback on the ruleset and which patterns I missed. The
 
 **First comment template** (drop ~2 min after submitting):
 
-> Author here. I built this after the third "AI agent deleted my database"
-> story this year (PocketOS, Replit/SaaStr, Anthropic's own Claude Code
-> incident report). Happy to answer questions on the ruleset, the
+> Author here. I built this after seeing the same failure pattern in PocketOS,
+> Replit/SaaStr, and Prisma's official AI-agent guardrails for destructive
+> migrate/reset commands. Happy to answer questions on the ruleset, the
 > libpg_query integration, or how MergeBrake differs from Squawk/pgfence/Atlas
 > (TL;DR: those lint SQL, MergeBrake also reads your ORM mapping and your
 > application code). Source + dogfood case studies on three real OSS Postgres

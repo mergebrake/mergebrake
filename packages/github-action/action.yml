@@ -45,7 +45,7 @@ inputs:
   github-token:
     description: 'Token used to post the sticky comment. Defaults to the workflow''s GITHUB_TOKEN.'
     required: false
-    default: ${{ github.token }}
+    default: ''
   mergebrake-version:
     description: 'Version of the `mergebrake` npm package to run (e.g. `0.0.1` or `latest`).'
     required: false
@@ -153,18 +153,21 @@ runs:
       if: inputs.sticky-comment == 'true' && github.event_name == 'pull_request'
       shell: bash
       env:
-        GITHUB_TOKEN: ${{ inputs.github-token }}
+        GITHUB_TOKEN: ${{ inputs.github-token || github.token }}
         MERGEBRAKE_VERSION: ${{ inputs.mergebrake-version }}
         MERGEBRAKE_COMMENT_MARKER: ${{ inputs.comment-marker }}
         MERGEBRAKE_SKIP_WHEN_SAFE: ${{ inputs.skip-comment-when-safe }}
       run: |
         SKIP_FLAG=""
         if [ "${MERGEBRAKE_SKIP_WHEN_SAFE}" = "true" ]; then SKIP_FLAG="--skip-when-safe"; fi
-        npx --yes "mergebrake@${MERGEBRAKE_VERSION}" comment \
+        if ! npx --yes "mergebrake@${MERGEBRAKE_VERSION}" comment \
           --from-file /tmp/mergebrake-report.json \
           --marker "${MERGEBRAKE_COMMENT_MARKER}" \
-          ${SKIP_FLAG}
-        echo "action=posted" >> "${GITHUB_OUTPUT}"
+          --github-output \
+          ${SKIP_FLAG}; then
+          echo "MergeBrake sticky comment failed; continuing with annotations/fail-on policy. Check pull-requests: write permissions." >&2
+          echo "action=skipped" >> "${GITHUB_OUTPUT}"
+        fi
 
     - name: Enforce fail-on policy
       shell: bash
