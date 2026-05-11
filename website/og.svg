@@ -69,7 +69,7 @@
     <rect width="220" height="58" rx="29" fill="rgba(244,63,94,0.12)" stroke="rgba(244,63,94,0.6)" stroke-width="1.5"/>
     <circle cx="34" cy="29" r="9" fill="#f43f5e"/>
     <text x="56" y="36" font-family="Inter, system-ui, sans-serif" font-size="18" font-weight="600" fill="#fecdd3">BLOCK</text>
-    <text x="124" y="36" font-family="Inter, system-ui, sans-serif" font-size="14" fill="#fda4af">risk 30,698</text>
+    <text x="124" y="36" font-family="Inter, system-ui, sans-serif" font-size="14" fill="#fda4af">risk 34,954</text>
   </g>
 
   <!-- Code-ish card hint -->

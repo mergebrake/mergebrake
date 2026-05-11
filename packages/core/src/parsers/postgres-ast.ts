@@ -221,7 +221,7 @@ export async function parsePostgres(
   opts: ParsePostgresOptions,
 ): Promise<ParsePostgresResult> {
   const baseLine = opts.startLine ?? 1;
-  const sql = opts.sql ?? "";
+  const sql = stripBom(opts.sql ?? "");
   let raw: ParseResult;
   try {
     raw = (await pgParse(sql)) as ParseResult;
@@ -256,6 +256,10 @@ function countNewlines(text: string): number {
     if (text.charCodeAt(i) === 10) n++;
   }
   return n;
+}
+
+function stripBom(text: string): string {
+  return text.charCodeAt(0) === 0xfeff ? text.slice(1) : text;
 }
 
 /* ---------------------------------------------------------------------------

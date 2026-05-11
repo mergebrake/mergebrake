@@ -16,13 +16,13 @@ To validate it, I ran the default ruleset against the full migration history
 of three popular open-source projects:
 
 - [`documenso/documenso`](https://github.com/documenso/documenso) — 157
-  migrations, **391 findings**, verdict **🔴 BLOCK** (risk **7,680**)
+  migrations, **506 findings**, verdict **🔴 BLOCK** (risk **9,250**)
 - [`triggerdotdev/trigger.dev`](https://github.com/triggerdotdev/trigger.dev) —
-  768 migrations, **1,243 findings**, verdict **🔴 BLOCK** (risk **30,698**)
+  768 migrations, **1,519 findings**, verdict **🔴 BLOCK** (risk **34,954**)
 - [`formbricks/formbricks`](https://github.com/formbricks/formbricks) — 141
-  migrations, **249 findings**, verdict **🔴 BLOCK** (risk **5,368**)
+  migrations, **314 findings**, verdict **🔴 BLOCK** (risk **6,051**)
 
-That's **1,883 risky patterns across 1,066 migrations**. The full breakdown is
+That's **2,339 risky patterns across 1,066 migrations**. The full breakdown is
 in [`examples/dogfood/`](./examples/dogfood/README.md).
 
 ## Why I started
@@ -154,7 +154,7 @@ I'd love feedback on the ruleset and which patterns I missed. The
 > libpg_query integration, or how MergeBrake differs from Squawk/pgfence/Atlas
 > (TL;DR: those lint SQL, MergeBrake also reads your ORM mapping and your
 > application code). Source + dogfood case studies on three real OSS Postgres
-> repos (1,066 migrations / 1,883 findings) here:
+> repos (1,066 migrations / 2,339 findings) here:
 > https://github.com/mergebrake/mergebrake/tree/main/examples/dogfood
 
 **Tags for crossposting**:

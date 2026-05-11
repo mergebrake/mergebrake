@@ -229,14 +229,13 @@ describe("AST rule engine — Postgres dialect", () => {
       ).toBeDefined();
     });
 
-    it("flags ADD COLUMN with a volatile function default as high risk", async () => {
+    it("leaves rewrite-causing ADD COLUMN defaults to the locking rule", async () => {
       const findings = await scan(
         `ALTER TABLE users ADD COLUMN id uuid DEFAULT gen_random_uuid();`,
       );
-      const f = findings.find((x) => x.ruleId === "safety/set-default-volatile");
-      expect(f).toBeDefined();
-      expect(f!.severity).toBe("high");
-      expect(f!.affectedSymbols).toContain("users.id");
+      expect(
+        findings.find((x) => x.ruleId === "safety/set-default-volatile"),
+      ).toBeUndefined();
     });
 
     it("flags ADD COLUMN with now() as medium deploy-sensitive behavior", async () => {
@@ -247,6 +246,15 @@ describe("AST rule engine — Postgres dialect", () => {
       expect(f).toBeDefined();
       expect(f!.severity).toBe("medium");
       expect(f!.message).toMatch(/migration-time generated value/);
+    });
+
+    it("parses BOM-prefixed SQL files", async () => {
+      const findings = await scan(
+        `\uFEFFALTER TABLE users ALTER COLUMN created_at SET DEFAULT now();`,
+      );
+      expect(
+        findings.find((x) => x.ruleId === "safety/set-default-volatile"),
+      ).toBeDefined();
     });
   });
 

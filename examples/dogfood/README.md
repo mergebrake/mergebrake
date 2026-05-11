@@ -57,21 +57,26 @@ mergebrake scan ... --format json
 
 ## Top-rule distribution across all three repos
 
-Aggregated across **1,883 findings**:
+Aggregated across **2,339 findings**:
 
 ```
-locking/create-index-non-concurrent           499  (26.5%)
-locking/add-foreign-key-without-not-valid     624  (33.1%)
-destructive/drop-column                       244  (12.9%)
-locking/add-not-null-without-default          146  ( 7.7%)
-destructive/drop-table                        116  ( 6.2%)
-safety/alter-enum-add-value                   110  ( 5.8%)
-locking/set-not-null                           52  ( 2.8%)
-locking/alter-column-type                      35  ( 1.9%)
-destructive/rename-column                      27  ( 1.4%)
-safety/update-without-where                    19  ( 1.0%)
+locking/add-foreign-key-without-not-valid     624  (26.7%)
+locking/create-index-non-concurrent           499  (21.3%)
+destructive/drop-constraint                   258  (11.0%)
+destructive/drop-column                       244  (10.4%)
+locking/add-not-null-without-default          146  ( 6.2%)
+destructive/drop-table                        116  ( 5.0%)
+safety/alter-enum-add-value                   110  ( 4.7%)
+destructive/drop-index                         98  ( 4.2%)
+safety/drop-not-null                           53  ( 2.3%)
+locking/set-not-null                           52  ( 2.2%)
+locking/alter-column-type                      35  ( 1.5%)
+safety/drop-default                            34  ( 1.5%)
+destructive/rename-column                      27  ( 1.2%)
+safety/update-without-where                    19  ( 0.8%)
+safety/create-table-without-primary-key        13  ( 0.6%)
 locking/add-primary-key                         6  ( 0.3%)
-locking/add-check-without-not-valid             3  ( 0.2%)
+locking/add-check-without-not-valid             3  ( 0.1%)
 safety/set-default-volatile                     2  ( 0.1%)
 ```
 
@@ -89,11 +94,11 @@ Two stories jump out:
    for emergency rollbacks. MergeBrake flagging it on PR is the cheapest
    place to catch it.
 
-## Riskiest single migrations across all three repos
+## Representative risky migrations across all three repos
 
 ### 1. `trigger.dev — 20230512085413_schema_redesign_for_new_system`
 
-Risk score: **3,030** · 84 findings.
+Risk score: **4,426** · 155 findings.
 
 [View migration](https://github.com/triggerdotdev/trigger.dev/blob/a5ba4065/internal-packages/database/prisma/migrations/20230512085413_schema_redesign_for_new_system/migration.sql)
 
@@ -114,7 +119,7 @@ but it's exactly the moment when a sticky PR comment is most useful.
 
 ### 2. `documenso — 20250522054050_add_organisations`
 
-Risk score: **1,610** · 61 findings.
+Risk score: **2,019** · 101 findings.
 
 [View migration](https://github.com/documenso/documenso/blob/87315adb/packages/prisma/migrations/20250522054050_add_organisations/migration.sql)
 
@@ -140,7 +145,7 @@ expand/contract recipe is designed to scaffold automatically.
 
 ### 4. `formbricks — 20250911192630_remove_deprecated_fields_and_tables`
 
-Risk score: **720** · 15 findings spanning `drop-column`, `drop-table`, and
+Risk score: **851** · 23 findings spanning `drop-column`, `drop-table`, and
 `alter-column-type`.
 
 [View migration](https://github.com/formbricks/formbricks/blob/cad10b88/packages/database/migration/20250911192630_remove_deprecated_fields_and_tables/migration.sql)
@@ -157,8 +162,8 @@ them in the same PR can still break replicas mid-rollout.
 
 ### 5. `documenso — 20230907080056_add_created_at_and_updated_at_columns`
 
-Risk score: **258** · 9 findings, but the interesting one is
-`safety/update-without-where`.
+This one is no longer in the refreshed top five, but it is the clearest
+example of `safety/update-without-where`.
 
 [View migration](https://github.com/documenso/documenso/blob/87315adb/packages/prisma/migrations/20230907080056_add_created_at_and_updated_at_columns/migration.sql)
 

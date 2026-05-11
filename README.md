@@ -266,7 +266,7 @@ to a regex linter that covers the destructive family.
 | `locking/add-primary-key` | high | `ADD PRIMARY KEY` without `USING INDEX` |
 | `locking/add-check-without-not-valid` | medium | `ADD CONSTRAINT ... CHECK` validated inline |
 | `locking/set-not-null` | medium | `ALTER COLUMN ... SET NOT NULL` |
-| `locking/add-column-with-volatile-default` | high | `ADD COLUMN ... DEFAULT now()` / `gen_random_uuid()` / `nextval(...)` (full table rewrite) |
+| `locking/add-column-with-volatile-default` | high | `ADD COLUMN ... DEFAULT gen_random_uuid()` / `nextval(...)` (full table rewrite) |
 
 ### Safety / data
 | Rule ID | Severity | Detects |
@@ -301,7 +301,7 @@ GitHub teams using Postgres, Prisma, Drizzle, raw SQL, and AI coding agents.
 
 We ran MergeBrake against the full migration history of three popular Postgres
 + Prisma open-source projects (documenso, trigger.dev, formbricks). On
-**1,066 migrations** the default ruleset surfaced **1,883 findings**. The
+**1,066 migrations** the default ruleset surfaced **2,339 findings**. The
 case studies — including the riskiest single migrations with GitHub
 permalinks — live in [`examples/dogfood/README.md`](./examples/dogfood/README.md).
 

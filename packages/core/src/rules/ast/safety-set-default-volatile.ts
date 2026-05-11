@@ -62,15 +62,15 @@ export const astSetDefaultVolatile: AstRule = {
 
         for (const expr of columnDefaultExpressions(col)) {
           const match = volatileDefault(expr);
-          if (!match) continue;
+          if (!match || match.rewritesTable) continue;
           findings.push(
             makeFinding(ctx, {
               ruleId: "safety/set-default-volatile",
-              severity: match.rewritesTable ? "high" : "medium",
+              severity: "medium",
               title: `ADD COLUMN ${table}.${col.colname} DEFAULT ${match.fnName}() needs review`,
-              message: match.rewritesTable
-                ? `Adding \`${table}.${col.colname}\` with \`DEFAULT ${match.fnName}()\` can force Postgres to materialize a generated value for every existing row while holding an ACCESS EXCLUSIVE lock. Add the column without the function default, backfill in batches, then add the default for future inserts.`
-                : `Adding \`${table}.${col.colname}\` with \`DEFAULT ${match.fnName}()\` assigns existing rows a migration-time generated value and changes future insert behavior. Add the column first, backfill intentionally, then set the default once app code is ready.`,
+              message:
+                `Adding \`${table}.${col.colname}\` with \`DEFAULT ${match.fnName}()\` assigns existing rows a migration-time generated value and changes future insert behavior. ` +
+                `Add the column first, backfill intentionally, then set the default once app code is ready.`,
               affectedSymbols: [col.colname, `${table}.${col.colname}`],
               recipe: {
                 summary: `Split the generated default into expand, batched backfill, and contract phases.`,

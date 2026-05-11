@@ -3,23 +3,20 @@ import { makeFinding } from "./_shared.js";
 import {
   isAlterTable,
   relationName,
-  funcCallName,
-  VOLATILE_FUNC_NAMES,
+  funcCallNameFromNode,
+  TABLE_REWRITE_DEFAULT_FUNC_NAMES,
   type ColumnDef,
-  type FuncCall,
 } from "../../parsers/postgres-ast.js";
 
 /**
- * `ADD COLUMN ... DEFAULT <volatile>` is the actually-dangerous default
- * pattern. Postgres >= 11 fast-paths `ADD COLUMN DEFAULT <constant>` without a
- * rewrite, but a volatile expression — `now()`, `gen_random_uuid()`,
- * `nextval(...)` — forces Postgres to evaluate the default per existing row,
- * which means a full table rewrite under ACCESS EXCLUSIVE. On a multi-million
- * row table that's tens of minutes of locked traffic and a giant WAL spike.
+ * `ADD COLUMN ... DEFAULT <non-fast-default>` is the actually dangerous
+ * generated-default pattern. Postgres >= 11 fast-paths constant/stable
+ * defaults, but functions such as gen_random_uuid(), random() and nextval()
+ * must be materialized for existing rows. That means a full table rewrite
+ * under ACCESS EXCLUSIVE and a large WAL spike on big tables.
  *
- * (The sibling rule `safety/set-default-volatile` only warns about behaviour
- * changes on future inserts — see that rule for the ALTER COLUMN ... SET
- * DEFAULT path.)
+ * The sibling rule `safety/set-default-volatile` owns non-rewrite behaviour
+ * changes such as ALTER COLUMN ... SET DEFAULT now().
  */
 export const astAddColumnVolatileDefault: AstRule = {
   id: "locking/add-column-with-volatile-default",
@@ -32,9 +29,8 @@ export const astAddColumnVolatileDefault: AstRule = {
       if (cmd?.subtype !== "AT_AddColumn") continue;
       const def = (cmd.def as { ColumnDef?: ColumnDef } | undefined)?.ColumnDef;
       if (!def?.colname) continue;
-      const fn = findVolatileDefault(def);
-      if (!fn) continue;
-      const fnName = funcCallName(fn).toLowerCase();
+      const fnName = findRewriteDefault(def);
+      if (!fnName) continue;
       const column = def.colname;
       findings.push(
         makeFinding(ctx, {
@@ -42,10 +38,10 @@ export const astAddColumnVolatileDefault: AstRule = {
           severity: "high",
           title: `ADD COLUMN ${table}.${column} DEFAULT ${fnName}() rewrites the table`,
           message:
-            `\`${fnName}()\` is a volatile expression. Adding a column with a volatile default forces Postgres to ` +
-            `evaluate the default for every existing row, requiring a full table rewrite under ACCESS EXCLUSIVE. ` +
-            `On a sizeable \`${table}\` this is tens of minutes of locked writes. Add the column nullable, backfill ` +
-            `in batches, then declare the default (or wire a BEFORE INSERT trigger if every row needs a per-insert value).`,
+            `\`${fnName}()\` cannot use Postgres' fast-default path. Adding \`${column}\` with this default forces Postgres to ` +
+            `materialize a value for every existing row, requiring a full table rewrite under ACCESS EXCLUSIVE. ` +
+            `On a sizeable \`${table}\` this can lock writes for minutes and create a large WAL spike. Add the column nullable, ` +
+            `backfill in batches, then declare the default for future inserts.`,
           affectedSymbols: [column, `${table}.${column}`],
           recipe: {
             summary: `Avoid the rewrite by adding the column nullable, backfilling in batches, then setting the default.`,
@@ -60,13 +56,19 @@ export const astAddColumnVolatileDefault: AstRule = {
                 description: `Backfill in batches outside the migration transaction.`,
                 sql:
                   `-- Example batched backfill\n` +
-                  `UPDATE ${table} SET ${column} = ${fnName}()\n` +
-                  `WHERE ${column} IS NULL\n` +
-                  `  AND id IN (SELECT id FROM ${table} WHERE ${column} IS NULL LIMIT 5000);`,
+                  `WITH batch AS (\n` +
+                  `  SELECT ctid FROM ${table}\n` +
+                  `  WHERE ${column} IS NULL\n` +
+                  `  LIMIT 5000\n` +
+                  `)\n` +
+                  `UPDATE ${table} AS target\n` +
+                  `SET ${column} = ${fnName}()\n` +
+                  `FROM batch\n` +
+                  `WHERE target.ctid = batch.ctid;`,
               },
               {
                 phase: "contract",
-                description: `Set the default for future inserts (no rewrite — affects new rows only).`,
+                description: `Set the default for future inserts (no rewrite; affects new rows only).`,
                 sql: `ALTER TABLE ${table} ALTER COLUMN ${column} SET DEFAULT ${fnName}();`,
               },
             ],
@@ -80,26 +82,20 @@ export const astAddColumnVolatileDefault: AstRule = {
   },
 };
 
-function findVolatileDefault(col: ColumnDef): FuncCall | null {
+function findRewriteDefault(col: ColumnDef): string | null {
+  const exprs: unknown[] = [];
+  if (col.raw_default !== undefined) exprs.push(col.raw_default);
   for (const c of col.constraints ?? []) {
-    if (c.Constraint?.contype !== "CONSTR_DEFAULT") continue;
-    const expr = (c.Constraint as { raw_expr?: unknown }).raw_expr;
-    const fn = extractFuncCall(expr);
-    if (!fn) continue;
-    const name = funcCallName(fn).split(".").pop() ?? "";
-    if (VOLATILE_FUNC_NAMES.has(name.toLowerCase())) return fn;
+    if (c.Constraint?.contype === "CONSTR_DEFAULT") {
+      exprs.push(c.Constraint.raw_expr);
+    }
   }
-  return null;
-}
 
-function extractFuncCall(expr: unknown): FuncCall | null {
-  if (!expr || typeof expr !== "object") return null;
-  const o = expr as Record<string, unknown>;
-  if ("FuncCall" in o && o.FuncCall) return o.FuncCall as FuncCall;
-  // Cast wrappers (e.g. now()::timestamptz) hide the function under TypeCast.arg
-  if ("TypeCast" in o && o.TypeCast && typeof o.TypeCast === "object") {
-    const arg = (o.TypeCast as { arg?: unknown }).arg;
-    return extractFuncCall(arg);
+  for (const expr of exprs) {
+    const fnName = funcCallNameFromNode(expr).toLowerCase();
+    const shortName = fnName.split(".").pop() ?? fnName;
+    if (TABLE_REWRITE_DEFAULT_FUNC_NAMES.has(shortName)) return fnName;
   }
+
   return null;
 }

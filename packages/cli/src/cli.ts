@@ -46,6 +46,10 @@ program
     "--changed-since <ref>",
     "Only scan input files changed since a git ref (e.g. origin/main).",
   )
+  .option(
+    "--scan-scope <scope>",
+    "Input scan scope: changed | all. Uses $MERGEBRAKE_BASE_REF/$GITHUB_BASE_REF for changed.",
+  )
   .option("--skip-cross-ref", "Skip cross-surface code grep (faster, less useful)")
   .option(
     "--config <path>",
@@ -62,13 +66,6 @@ program
       : [];
 
     const repoRoot = path.resolve(options.repo);
-    const scanInputs = options.changedSince
-      ? await resolveChangedInputs({
-          repoRoot,
-          inputs,
-          ref: String(options.changedSince),
-        })
-      : inputs;
 
     // Load .mergebrake.yml unless explicitly disabled.
     let loadedConfig: Awaited<ReturnType<typeof loadConfig>> = {
@@ -93,6 +90,37 @@ program
         console.error(`mergebrake: config warning: ${w}`);
       }
     }
+
+    const scopeFromFlag =
+      typeof options.scanScope === "string" && options.scanScope.length > 0
+        ? String(options.scanScope)
+        : undefined;
+    const effectiveScanScope =
+      scopeFromFlag ??
+      loadedConfig.config.scanScope ??
+      process.env["MERGEBRAKE_DEFAULT_SCAN_SCOPE"];
+    if (
+      effectiveScanScope !== undefined &&
+      effectiveScanScope !== "changed" &&
+      effectiveScanScope !== "all"
+    ) {
+      throw new Error(
+        `--scan-scope must be "changed" or "all"; got ${JSON.stringify(effectiveScanScope)}`,
+      );
+    }
+    const changedSince =
+      typeof options.changedSince === "string" && options.changedSince.length > 0
+        ? String(options.changedSince)
+        : effectiveScanScope === "changed"
+          ? defaultChangedSinceRef()
+          : undefined;
+    const scanInputs = changedSince
+      ? await resolveChangedInputs({
+          repoRoot,
+          inputs,
+          ref: changedSince,
+        })
+      : inputs;
 
     const analysisOptions = {
       repoRoot,
@@ -272,6 +300,22 @@ async function loadReport(opts: {
 function parseReportJson(raw: string): AnalysisReport {
   const withoutBom = raw.charCodeAt(0) === 0xfeff ? raw.slice(1) : raw;
   return JSON.parse(withoutBom) as AnalysisReport;
+}
+
+function defaultChangedSinceRef(): string | undefined {
+  const ref =
+    process.env["MERGEBRAKE_BASE_REF"] ?? process.env["GITHUB_BASE_REF"];
+  if (!ref) return undefined;
+  if (
+    ref.startsWith("origin/") ||
+    ref.startsWith("refs/") ||
+    ref.includes("~") ||
+    ref.includes("^") ||
+    /^[0-9a-f]{7,40}$/i.test(ref)
+  ) {
+    return ref;
+  }
+  return `origin/${ref}`;
 }
 
 function readStdin(): Promise<string> {

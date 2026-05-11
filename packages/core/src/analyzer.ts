@@ -79,10 +79,11 @@ export async function analyzeMigration(
     );
     let crossRefs = f.crossRefs;
     if (!opts.skipCrossRef && affectedSymbols.length > 0) {
-      crossRefs = await findCrossReferences({
+      crossRefs = await findCrossReferences(crossRefOptions({
         repoRoot: opts.repoRoot,
         symbols: affectedSymbols,
-      });
+        config: opts.config,
+      }));
     }
     const finding = { ...f, affectedSymbols, crossRefs };
     findings.push(finding);
@@ -93,10 +94,11 @@ export async function analyzeMigration(
       isContractFinding(finding) &&
       finding.crossRefs.length === 0
     ) {
-      const baseCrossRefs = await findCrossReferences({
+      const baseCrossRefs = await findCrossReferences(crossRefOptions({
         repoRoot: opts.baseRepoRoot,
         symbols: affectedSymbols,
-      });
+        config: opts.config,
+      }));
       if (baseCrossRefs.length > 0) {
         findings.push(buildContractWithoutExpandFinding(finding, baseCrossRefs));
       }
@@ -122,6 +124,24 @@ export async function analyzeMigration(
     scannedFiles: sqlBlocks.map((b) => b.sourceFile),
     durationMs: Date.now() - started,
   };
+}
+
+function crossRefOptions(input: {
+  repoRoot: string;
+  symbols: string[];
+  config: MergeBrakeConfig | undefined;
+}): Parameters<typeof findCrossReferences>[0] {
+  const out: Parameters<typeof findCrossReferences>[0] = {
+    repoRoot: input.repoRoot,
+    symbols: input.symbols,
+  };
+  if (input.config?.crossRef?.globs) {
+    out.globs = input.config.crossRef.globs;
+  }
+  if (input.config?.crossRef?.maxMatchesPerSymbol !== undefined) {
+    out.maxMatchesPerSymbol = input.config.crossRef.maxMatchesPerSymbol;
+  }
+  return out;
 }
 
 function isContractFinding(finding: Finding): boolean {

@@ -6,7 +6,7 @@ on:
       - 'v*'
 
 permissions:
-  contents: write       # create GitHub release + force-push the major mobile tag
+  contents: write       # create GitHub release + force-push the major tag
   id-token: write       # required for `npm publish --provenance`
 
 concurrency:
@@ -43,6 +43,7 @@ jobs:
         run: |
           set -euo pipefail
           TAG="${GITHUB_REF_NAME#v}"
+          export TAG
           declare -a FILES=(
             "packages/shared/package.json"
             "packages/core/package.json"
@@ -56,12 +57,20 @@ jobs:
               exit 1
             fi
           done
-          # Workspace deps must reference the exact version, never "*".
+          # Workspace deps must reference the exact version for this tag.
           for f in packages/core/package.json packages/cli/package.json; do
-            if grep -q '"@mergebrake/.*": "\*"' "${f}"; then
-              echo "::error::${f} still references a workspace dep with \"*\". Run release-prepare." >&2
-              exit 1
-            fi
+            node -e '
+              const file = process.argv[1];
+              const tag = process.env.TAG;
+              const pkg = require("./" + file);
+              for (const dep of ["@mergebrake/shared", "@mergebrake/core"]) {
+                const actual = pkg.dependencies && pkg.dependencies[dep];
+                if (actual !== undefined && actual !== tag) {
+                  console.error(`::error::${file} dependency ${dep}=${actual} does not match ${tag}. Run release-prepare.`);
+                  process.exit(1);
+                }
+              }
+            ' "${f}"
           done
           echo "Tag and package versions match: v${TAG}"
 
@@ -92,7 +101,7 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Move the major mobile tag (e.g. v0 -> v0.0.3)
+      - name: Move the major tag (e.g. v0 -> v0.0.3)
         run: |
           set -euo pipefail
           MAJOR=$(echo "${GITHUB_REF_NAME}" | cut -d. -f1)   # "v0", "v1", …

@@ -6,7 +6,7 @@
 // What it does:
 //   1. Validates the version string.
 //   2. Bumps `version` in the root + every package.json under packages/*.
-//   3. Replaces workspace deps that use "*" with the new exact version so the
+//   3. Replaces workspace deps with the new exact version so the
 //      tarball is reproducible from outside the monorepo.
 //   4. Runs `npm run build` and `npm test` — refuses to tag a broken release.
 //   5. Verifies `npm pack --dry-run` for the public packages.
@@ -63,9 +63,14 @@ for (const rel of PACKAGE_FILES) {
   }
 
   for (const dep of WORKSPACE_DEPS) {
-    if (json.dependencies && json.dependencies[dep] === "*") {
+    if (
+      json.dependencies &&
+      json.dependencies[dep] !== undefined &&
+      json.dependencies[dep] !== version
+    ) {
+      const beforeDep = json.dependencies[dep];
       json.dependencies[dep] = version;
-      summary.push(`  ${rel}: ${dep} * -> ${version}`);
+      summary.push(`  ${rel}: ${dep} ${beforeDep} -> ${version}`);
     }
   }
 
@@ -85,6 +90,11 @@ for (const rel of PACKAGE_FILES) {
 if (summary.length) {
   console.log("\nWorkspace dep rewrites:");
   for (const line of summary) console.log(line);
+}
+
+if (!dryRun) {
+  console.log("\nUpdating package-lock.json...");
+  run("npm install --package-lock-only --ignore-scripts");
 }
 
 console.log("\nRunning build…");
@@ -113,7 +123,7 @@ if (!status.trim()) {
 }
 
 console.log("\nCommitting and tagging…");
-run("git add package.json packages/shared/package.json packages/core/package.json packages/cli/package.json package-lock.json 2>/dev/null || git add -A");
+run("git add package.json packages/shared/package.json packages/core/package.json packages/cli/package.json package-lock.json");
 run(`git commit -m "chore(release): v${version}"`);
 run(`git tag -a v${version} -m "v${version}"`);
 

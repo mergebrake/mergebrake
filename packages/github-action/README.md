@@ -40,7 +40,8 @@ the same comment in place — no comment spam.
 
 By default, pull request runs scan only migration files changed in that PR. This
 keeps the first install from failing on years of historical migrations. Set
-`scan-scope: all` when you intentionally want a full repository audit.
+`scan-scope: all` when you intentionally want a full repository audit, or set
+`scan-scope` in `.mergebrake.yml`.
 
 ## What the comment shows
 
@@ -61,7 +62,7 @@ keeps the first install from failing on years of historical migrations. Set
 | `dialect` | `postgres` | `postgres` \| `mysql` \| `sqlite`. |
 | `orm` | (auto) | Override ORM detection: `prisma`, `drizzle`, `knex`, `sequelize`, `typeorm`, `raw-sql`. |
 | `base-repo` | _empty_ | Path to a base-branch checkout (enables deploy-order checks). |
-| `scan-scope` | `changed` | `changed` scans only migration files touched by the PR; `all` scans the full input glob. |
+| `scan-scope` | `.mergebrake.yml`, then `changed` | `changed` scans only migration files touched by the PR; `all` scans the full input glob. |
 | `sticky-comment` | `true` | Post or update a sticky PR comment. |
 | `comment-marker` | `mergebrake:sticky-comment` | Hidden marker used to find the comment on subsequent runs. |
 | `skip-comment-when-safe` | `false` | Do not comment when the verdict is `SAFE` with zero findings. |
@@ -144,7 +145,7 @@ A full copy-pasteable workflow lives in
 [`examples/workflow-with-recheck.yml`](./examples/workflow-with-recheck.yml).
 
 By default only `OWNER`, `MEMBER`, and `COLLABORATOR` author associations are
-allowed to trigger a recheck — drive-by drive-by commenters can't burn your
+allowed to trigger a recheck — drive-by commenters can't burn your
 Actions minutes. Override with the `recheck-allowed-associations` input. Set
 `recheck-trigger-phrase: ''` to disable the feature entirely.
 

@@ -31,9 +31,9 @@ inputs:
     required: false
     default: ''
   scan-scope:
-    description: 'Files to scan in pull_request workflows: changed | all. `changed` scans only migration files touched by the PR; `all` audits the full input glob.'
+    description: 'Files to scan in pull_request workflows: changed | all. Empty means `.mergebrake.yml` decides, falling back to changed.'
     required: false
-    default: changed
+    default: ''
   sticky-comment:
     description: 'Post (or update) a sticky review comment on the pull request. Requires `permissions: pull-requests: write` and a token with that scope (default `${{ github.token }}`).'
     required: false
@@ -101,12 +101,27 @@ runs:
       env:
         TRIGGER_PHRASE: ${{ inputs.recheck-trigger-phrase }}
         ALLOWED_ASSOCIATIONS: ${{ inputs.recheck-allowed-associations }}
+        GITHUB_TOKEN: ${{ inputs.github-token || github.token }}
       run: |
         case "${GITHUB_EVENT_NAME}" in
-          pull_request|pull_request_target)
+          pull_request)
             echo "should-run=true" >> "$GITHUB_OUTPUT"
             echo "needs-checkout=false" >> "$GITHUB_OUTPUT"
+            BASE_REF=$(jq -r '.pull_request.base.ref // empty' "${GITHUB_EVENT_PATH}")
+            PR_NUMBER=$(jq -r '.pull_request.number // empty' "${GITHUB_EVENT_PATH}")
+            echo "base-ref=${BASE_REF:-${GITHUB_BASE_REF:-}}" >> "$GITHUB_OUTPUT"
+            echo "pr-number=${PR_NUMBER}" >> "$GITHUB_OUTPUT"
             echo "MergeBrake: running on ${GITHUB_EVENT_NAME}."
+            exit 0
+            ;;
+          pull_request_target)
+            echo "should-run=true" >> "$GITHUB_OUTPUT"
+            echo "needs-checkout=true" >> "$GITHUB_OUTPUT"
+            BASE_REF=$(jq -r '.pull_request.base.ref // empty' "${GITHUB_EVENT_PATH}")
+            PR_NUMBER=$(jq -r '.pull_request.number // empty' "${GITHUB_EVENT_PATH}")
+            echo "base-ref=${BASE_REF:-${GITHUB_BASE_REF:-}}" >> "$GITHUB_OUTPUT"
+            echo "pr-number=${PR_NUMBER}" >> "$GITHUB_OUTPUT"
+            echo "MergeBrake: running on ${GITHUB_EVENT_NAME}; checking out PR merge ref."
             exit 0
             ;;
           issue_comment)
@@ -149,10 +164,22 @@ runs:
           exit 0
         fi
 
+        AUTH_HEADER=()
+        if [ -n "${GITHUB_TOKEN:-}" ]; then
+          AUTH_HEADER=(-H "Authorization: Bearer ${GITHUB_TOKEN}")
+        fi
+        PR_JSON=$(curl -fsSL \
+          -H "Accept: application/vnd.github+json" \
+          -H "X-GitHub-Api-Version: 2022-11-28" \
+          "${AUTH_HEADER[@]}" \
+          "${PR_URL}")
+        BASE_REF=$(printf '%s' "${PR_JSON}" | jq -r '.base.ref // empty')
+
         echo "MergeBrake: recheck triggered by ${ASSOC} on PR #${PR_NUMBER}."
         echo "should-run=true" >> "$GITHUB_OUTPUT"
         echo "needs-checkout=true" >> "$GITHUB_OUTPUT"
         echo "pr-number=${PR_NUMBER}" >> "$GITHUB_OUTPUT"
+        echo "base-ref=${BASE_REF}" >> "$GITHUB_OUTPUT"
 
     - name: Check out PR head
       if: steps.trigger.outputs.needs-checkout == 'true'
@@ -170,12 +197,15 @@ runs:
     - name: Collect commit messages for AI-PR detection
       if: steps.trigger.outputs.should-run == 'true'
       shell: bash
+      env:
+        MERGEBRAKE_BASE_REF: ${{ steps.trigger.outputs.base-ref }}
       run: |
-        if [ -n "${GITHUB_BASE_REF:-}" ]; then
-          # In pull_request workflows, GITHUB_BASE_REF is the target branch.
+        if [ -n "${MERGEBRAKE_BASE_REF:-}" ]; then
+          # In pull_request workflows, this is the target branch. On
+          # issue_comment rechecks it is resolved via the PR API.
           # Fetch enough history to walk back to the merge base.
-          git fetch --no-tags --depth=50 origin "${GITHUB_BASE_REF}" >/dev/null 2>&1 || true
-          git log --format='%B%n---' "origin/${GITHUB_BASE_REF}..HEAD" \
+          git fetch --no-tags --depth=50 origin "${MERGEBRAKE_BASE_REF}" >/dev/null 2>&1 || true
+          git log --format='%B%n---' "origin/${MERGEBRAKE_BASE_REF}..HEAD" \
             > /tmp/mergebrake-commits.txt
         else
           git log -n 20 --format='%B%n---' HEAD > /tmp/mergebrake-commits.txt
@@ -192,7 +222,9 @@ runs:
         MERGEBRAKE_FAIL_ON: ${{ inputs.fail-on }}
         MERGEBRAKE_ORM: ${{ inputs.orm }}
         MERGEBRAKE_BASE_REPO: ${{ inputs.base-repo }}
+        MERGEBRAKE_BASE_REF: ${{ steps.trigger.outputs.base-ref }}
         MERGEBRAKE_SCAN_SCOPE: ${{ inputs.scan-scope }}
+        MERGEBRAKE_DEFAULT_SCAN_SCOPE: changed
         MERGEBRAKE_ANNOTATIONS: ${{ inputs.output-annotations }}
         MERGEBRAKE_SARIF_FILE: ${{ inputs.sarif-file }}
         MERGEBRAKE_CONFIG: ${{ inputs.config }}
@@ -204,12 +236,16 @@ runs:
         if [ -n "${MERGEBRAKE_BASE_REPO}" ]; then BASE_REPO_FLAG="--base-repo ${MERGEBRAKE_BASE_REPO}"; fi
         CONFIG_FLAG=""
         if [ -n "${MERGEBRAKE_CONFIG}" ]; then CONFIG_FLAG="--config ${MERGEBRAKE_CONFIG}"; fi
-        CHANGED_FLAG=""
-        if [ "${MERGEBRAKE_SCAN_SCOPE}" = "changed" ] && [ -n "${GITHUB_BASE_REF:-}" ]; then
-          CHANGED_FLAG="--changed-since origin/${GITHUB_BASE_REF}"
-        elif [ "${MERGEBRAKE_SCAN_SCOPE}" != "changed" ] && [ "${MERGEBRAKE_SCAN_SCOPE}" != "all" ]; then
-          echo "Unknown scan-scope value: ${MERGEBRAKE_SCAN_SCOPE}" >&2
-          exit 2
+        SCOPE_FLAG=""
+        if [ -n "${MERGEBRAKE_SCAN_SCOPE}" ]; then
+          if [ "${MERGEBRAKE_SCAN_SCOPE}" != "changed" ] && [ "${MERGEBRAKE_SCAN_SCOPE}" != "all" ]; then
+            echo "Unknown scan-scope value: ${MERGEBRAKE_SCAN_SCOPE}" >&2
+            exit 2
+          fi
+          SCOPE_FLAG="--scan-scope ${MERGEBRAKE_SCAN_SCOPE}"
+        fi
+        if [ "${MERGEBRAKE_SCAN_SCOPE:-${MERGEBRAKE_DEFAULT_SCAN_SCOPE}}" = "changed" ] && [ -z "${MERGEBRAKE_BASE_REF:-}" ]; then
+          echo "MergeBrake: scan-scope=changed but no base ref was resolved; scanning all configured inputs." >&2
         fi
 
         # Always produce a JSON report for the comment step; the exit code is
@@ -222,7 +258,7 @@ runs:
           ${ORM_FLAG} \
           ${BASE_REPO_FLAG} \
           ${CONFIG_FLAG} \
-          ${CHANGED_FLAG} \
+          ${SCOPE_FLAG} \
           > /tmp/mergebrake-report.json 2>/tmp/mergebrake-scan.err \
           || true  # never fail this step; failure policy is enforced below
 
@@ -252,7 +288,7 @@ runs:
             ${ORM_FLAG} \
             ${BASE_REPO_FLAG} \
             ${CONFIG_FLAG} \
-            ${CHANGED_FLAG} \
+            ${SCOPE_FLAG} \
             || true
         fi
 
@@ -265,7 +301,7 @@ runs:
             ${ORM_FLAG} \
             ${BASE_REPO_FLAG} \
             ${CONFIG_FLAG} \
-            ${CHANGED_FLAG} \
+            ${SCOPE_FLAG} \
             > "${MERGEBRAKE_SARIF_FILE}" || true
           if [ -s "${MERGEBRAKE_SARIF_FILE}" ]; then
             echo "sarif-file=${MERGEBRAKE_SARIF_FILE}" >> "${GITHUB_OUTPUT}"

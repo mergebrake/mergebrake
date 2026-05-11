@@ -132,16 +132,18 @@ describe("safety/create-table-without-primary-key", () => {
 });
 
 describe("locking/add-column-with-volatile-default", () => {
-  it("flags ADD COLUMN ... DEFAULT now()", async () => {
+  it("does not flag ADD COLUMN ... DEFAULT now() as a table rewrite", async () => {
     const findings = await scan(
       `ALTER TABLE users ADD COLUMN created_at timestamptz NOT NULL DEFAULT now();`,
     );
-    const f = findings.find(
-      (x) => x.ruleId === "locking/add-column-with-volatile-default",
-    );
-    expect(f).toBeDefined();
-    expect(f!.severity).toBe("high");
-    expect(f!.title).toMatch(/now/);
+    expect(
+      findings.find(
+        (x) => x.ruleId === "locking/add-column-with-volatile-default",
+      ),
+    ).toBeUndefined();
+    expect(
+      findings.find((x) => x.ruleId === "safety/set-default-volatile"),
+    ).toBeDefined();
   });
 
   it("flags ADD COLUMN ... DEFAULT gen_random_uuid()", async () => {
@@ -152,6 +154,9 @@ describe("locking/add-column-with-volatile-default", () => {
       (x) => x.ruleId === "locking/add-column-with-volatile-default",
     );
     expect(f).toBeDefined();
+    const recipeSql = f!.recipe?.steps[1]?.sql ?? "";
+    expect(recipeSql).toContain("ctid");
+    expect(recipeSql).not.toMatch(/id IN/);
   });
 
   it("does not flag ADD COLUMN with a constant default", async () => {
