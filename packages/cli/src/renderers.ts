@@ -10,7 +10,7 @@ const VERDICT_BADGE: Record<Verdict, string> = {
 export function renderTerminal(report: AnalysisReport): string {
   const out: string[] = [];
   out.push("");
-  out.push(pc.bold("MergeBrake — pre-merge migration guard"));
+  out.push(pc.bold("MergeBrake — schema impact guard"));
   out.push(pc.dim("─".repeat(56)));
   out.push(`Verdict:    ${colorVerdict(report.verdict)}`);
   out.push(`Risk score: ${report.riskScore}`);
@@ -49,7 +49,7 @@ function renderFindingTerminal(f: Finding, idx: number): string {
   lines.push(`  ${f.message}`);
   if (f.crossRefs.length > 0) {
     lines.push("");
-    lines.push(pc.bold(`  Cross-surface impact (${f.crossRefs.length} reference${f.crossRefs.length === 1 ? "" : "s"} in app code):`));
+    lines.push(pc.bold(`  App-code impact (${f.crossRefs.length} reference${f.crossRefs.length === 1 ? "" : "s"}):`));
     for (const r of f.crossRefs.slice(0, 5)) {
       lines.push(`    • ${pc.cyan(r.file)}:${r.line}  ${pc.dim(r.snippet)}`);
     }
@@ -79,7 +79,7 @@ export function renderMarkdown(
   opts: { githubAnnotations?: boolean } = {},
 ): string {
   const out: string[] = [];
-  out.push("## MergeBrake — pre-merge migration guard");
+  out.push("## MergeBrake — schema impact guard");
   out.push("");
   out.push(`**Verdict:** ${VERDICT_BADGE[report.verdict]}  •  **Risk score:** ${report.riskScore}`);
   out.push("");
@@ -128,7 +128,7 @@ function renderFindingMarkdown(f: Finding, idx: number): string {
   out.push(f.message);
   if (f.crossRefs.length > 0) {
     out.push("");
-    out.push(`**Cross-surface impact** — \`${f.crossRefs[0]!.symbol}\` is still referenced in:`);
+    out.push(`**App-code impact** — \`${f.crossRefs[0]!.symbol}\` is still referenced in:`);
     out.push("");
     out.push("```");
     for (const r of f.crossRefs.slice(0, 8)) {

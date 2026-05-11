@@ -1,13 +1,19 @@
 # MergeBrake
 
-Pre-merge guard for database migrations. MergeBrake scans migration files,
-flags destructive or downtime-prone schema changes, detects AI-generated PR
-signals, and reports cross-references in application code before the change
-reaches production.
+MergeBrake catches database-breaking pull requests before merge. It maps schema
+changes to the application code they will break, detects AI-generated PR
+signals, and gives reviewers a safe rollout plan instead of a generic warning.
 
 ```bash
 npx mergebrake scan "prisma/migrations/**/migration.sql" \
   --commits ./.git/COMMIT_EDITMSG
+```
+
+For deploy-order checks, compare the PR checkout with a base-branch checkout:
+
+```bash
+npx mergebrake scan "prisma/migrations/**/migration.sql" \
+  --base-repo ../my-app-base
 ```
 
 Output formats:

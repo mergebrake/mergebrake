@@ -1,7 +1,7 @@
 {
   "name": "@mergebrake/core",
   "version": "0.0.1",
-  "description": "MergeBrake core engine: SQL parsing, multi-ORM detection, risk rules, expand/contract recipes, cross-surface analysis.",
+  "description": "MergeBrake core engine: schema-change risk rules, app-code impact mapping, AI-PR signals, and rollout guidance.",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

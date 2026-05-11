@@ -1,5 +1,5 @@
-name: MergeBrake — pre-merge migration guard
-description: Hit the brake before AI-generated PRs hit production. Scans DB migrations for destructive or downtime-prone changes.
+name: MergeBrake — schema impact guard
+description: Catch database-breaking PRs before merge by mapping schema changes to impacted app code.
 author: MergeBrake contributors
 branding:
   icon: shield
@@ -30,6 +30,10 @@ inputs:
     description: 'Output format: terminal | markdown | github | json.'
     required: false
     default: github
+  base-repo:
+    description: Optional path to a base-branch checkout. Enables deploy-order checks for contract changes bundled with app cleanup.
+    required: false
+    default: ''
 
 runs:
   using: composite
@@ -51,9 +55,12 @@ runs:
       run: |
         ORM_FLAG=""
         if [ -n "${{ inputs.orm }}" ]; then ORM_FLAG="--orm ${{ inputs.orm }}"; fi
+        BASE_REPO_FLAG=""
+        if [ -n "${{ inputs.base-repo }}" ]; then BASE_REPO_FLAG="--base-repo ${{ inputs.base-repo }}"; fi
         npx --yes mergebrake@latest scan ${{ inputs.inputs }} \
           --dialect "${{ inputs.dialect }}" \
           --format "${{ inputs.format }}" \
           --commits /tmp/mergebrake-commits.txt \
           --fail-on "${{ inputs.fail-on }}" \
-          $ORM_FLAG
+          $ORM_FLAG \
+          $BASE_REPO_FLAG

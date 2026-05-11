@@ -23,6 +23,10 @@ program
   )
   .option("-r, --repo <path>", "Repository root for cross-surface analysis", process.cwd())
   .option(
+    "--base-repo <path>",
+    "Optional base-branch checkout for deploy-order impact checks",
+  )
+  .option(
     "-f, --format <format>",
     "Output format: terminal, markdown, json, github",
     "terminal",
@@ -40,14 +44,21 @@ program
           .filter(Boolean)
       : [];
 
-    const report = await analyzeMigration({
+    const analysisOptions = {
       repoRoot: path.resolve(options.repo),
       inputs,
       commitMessages,
       ormStack: options.orm,
       dialect: options.dialect,
       skipCrossRef: options.skipCrossRef === true,
-    });
+    };
+    if (options.baseRepo) {
+      Object.assign(analysisOptions, {
+        baseRepoRoot: path.resolve(options.baseRepo),
+      });
+    }
+
+    const report = await analyzeMigration(analysisOptions);
 
     switch (options.format) {
       case "json":

@@ -2,7 +2,7 @@
   "name": "mergebrake-monorepo",
   "version": "0.0.0",
   "private": true,
-  "description": "MergeBrake: hit the brake before AI-generated PRs hit production. Monorepo root.",
+  "description": "MergeBrake maps database schema changes to the application code they can break before a PR merges.",
   "workspaces": [
     "packages/*"
   ],

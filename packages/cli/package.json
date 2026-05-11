@@ -1,7 +1,7 @@
 {
   "name": "mergebrake",
   "version": "0.0.1",
-  "description": "Hit the brake before AI-generated PRs hit production. Pre-merge guard for database migrations.",
+  "description": "Catch database-breaking PRs before merge by mapping schema changes to impacted app code.",
   "type": "module",
   "bin": {
     "mergebrake": "./dist/cli.js"
@@ -38,7 +38,9 @@
     "github-action",
     "ci",
     "schema-migration",
-    "expand-contract"
+    "expand-contract",
+    "schema-impact",
+    "database-review"
   ],
   "license": "MIT",
   "engines": {

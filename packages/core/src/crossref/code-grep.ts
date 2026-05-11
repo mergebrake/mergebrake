@@ -13,11 +13,13 @@ export interface FindCrossReferencesOptions {
 }
 
 const DEFAULT_GLOBS = [
-  "src/**/*.{ts,tsx,js,jsx,mts,cts}",
-  "app/**/*.{ts,tsx,js,jsx}",
-  "lib/**/*.{ts,tsx,js,jsx}",
-  "server/**/*.{ts,tsx,js,jsx}",
-  "api/**/*.{ts,tsx,js,jsx}",
+  "src/**/*.{ts,tsx,js,jsx,mts,cts,sql,py,go,java,kt,rb,php,cs}",
+  "app/**/*.{ts,tsx,js,jsx,sql}",
+  "lib/**/*.{ts,tsx,js,jsx,mts,cts,sql,py}",
+  "server/**/*.{ts,tsx,js,jsx,mts,cts,sql,py,go}",
+  "api/**/*.{ts,tsx,js,jsx,sql,py}",
+  "queries/**/*.sql",
+  "sql/**/*.sql",
   "**/*.py",
   "!**/node_modules/**",
   "!**/dist/**",
@@ -26,6 +28,10 @@ const DEFAULT_GLOBS = [
   "!**/coverage/**",
   "!**/generated/**",
   "!**/.git/**",
+  "!**/prisma/migrations/**",
+  "!**/drizzle/**",
+  "!**/migrations/**",
+  "!**/db/migrate/**",
 ];
 
 export async function findCrossReferences(
@@ -42,6 +48,7 @@ export async function findCrossReferences(
   });
 
   const refs: CrossRef[] = [];
+  const seenRefs = new Set<string>();
   const symbolCount = new Map<string, number>();
 
   for (const symbol of opts.symbols) {
@@ -67,6 +74,9 @@ export async function findCrossReferences(
         const line = lines[i] ?? "";
         if (isCommentOnlyLine(line)) continue;
         if (matcher.test(line)) {
+          const key = `${file}:${i + 1}:${line.trim()}`;
+          if (seenRefs.has(key)) continue;
+          seenRefs.add(key);
           refs.push({
             file: path.relative(opts.repoRoot, file).replace(/\\/g, "/"),
             line: i + 1,
@@ -101,7 +111,21 @@ function isCommentOnlyLine(line: string): boolean {
  * and ORM-style references (`User.fullName`, `users.full_name`) as positive matches.
  */
 function buildSymbolMatcher(symbol: string): RegExp {
-  const escaped = symbol.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const parts = symbol.split(".");
+  if (parts.length >= 2) {
+    const table = parts.slice(0, -1).join(".");
+    const column = parts[parts.length - 1] ?? "";
+    const escapedTable = escapeRegex(table);
+    const escapedColumn = escapeRegex(column);
+    return new RegExp(
+      `(?:\\b${escapeRegex(symbol)}\\b|['"\`]${escapeRegex(symbol)}['"\`]|["'\`]?${escapedTable}["'\`]?\\s*\\.\\s*["'\`]?${escapedColumn}["'\`]?)`,
+    );
+  }
+  const escaped = escapeRegex(symbol);
   // Word boundary on both sides, or quoted (for ORM column references)
   return new RegExp(`(?:\\b${escaped}\\b|['"\`]${escaped}['"\`])`);
+}
+
+function escapeRegex(input: string): string {
+  return input.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }

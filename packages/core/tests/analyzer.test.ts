@@ -34,4 +34,34 @@ describe("analyzeMigration", () => {
       "// Raw query that still mentions full_name",
     );
   });
+
+  it("detects contract-without-expand when the base branch still had app refs", async () => {
+    const headRoot = fileURLToPath(
+      new URL(
+        "./fixtures/contract-without-expand/head/",
+        import.meta.url,
+      ),
+    );
+    const baseRoot = fileURLToPath(
+      new URL(
+        "./fixtures/contract-without-expand/base/",
+        import.meta.url,
+      ),
+    );
+
+    const report = await analyzeMigration({
+      repoRoot: headRoot,
+      baseRepoRoot: baseRoot,
+      inputs: ["prisma/migrations/**/migration.sql"],
+    });
+
+    expect(report.findings.map((finding) => finding.ruleId)).toContain(
+      "deploy-order/contract-without-expand",
+    );
+    const deployOrderFinding = report.findings.find(
+      (finding) => finding.ruleId === "deploy-order/contract-without-expand",
+    )!;
+    expect(deployOrderFinding.crossRefs[0]?.file).toBe("base:src/api/users.ts");
+    expect(deployOrderFinding.crossRefs[0]?.symbol).toBe("displayName");
+  });
 });
