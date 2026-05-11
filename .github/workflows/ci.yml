@@ -13,7 +13,13 @@ jobs:
         with:
           node-version: 20
           cache: npm
-      - run: npm ci
+      - name: Install dependencies
+        run: |
+          # Regenerate the lock so Linux gets the right optional-dep variants
+          # (@rollup/rollup-linux-x64-gnu, etc). The committed lock is created
+          # on Windows. See https://github.com/npm/cli/issues/4828.
+          rm -f package-lock.json
+          npm install --no-audit --no-fund
       - run: npm run build
       - run: npm test
       - name: Dogfood — scan our own examples
