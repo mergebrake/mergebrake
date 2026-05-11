@@ -108,6 +108,46 @@ jobs:
 Findings then appear in **Security › Code scanning** with the same severity
 mapping the sticky comment uses.
 
+## `@mergebrake recheck` from a PR comment
+
+Add an `issue_comment` trigger to your workflow and the action will re-run
+when a maintainer comments `@mergebrake recheck` on the pull request. The
+sticky comment is updated in place — no extra commit needed.
+
+```yaml
+on:
+  pull_request:
+    paths: ['prisma/**', 'drizzle/**', 'migrations/**', 'src/**']
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  schema-impact:
+    if: >-
+      github.event_name == 'pull_request' ||
+      (github.event_name == 'issue_comment' && github.event.issue.pull_request != null)
+    runs-on: ubuntu-latest
+    steps:
+      - if: github.event_name == 'pull_request'
+        uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: mergebrake/mergebrake@v0
+        with:
+          fail-on: BLOCK
+```
+
+A full copy-pasteable workflow lives in
+[`examples/workflow-with-recheck.yml`](./examples/workflow-with-recheck.yml).
+
+By default only `OWNER`, `MEMBER`, and `COLLABORATOR` author associations are
+allowed to trigger a recheck — drive-by drive-by commenters can't burn your
+Actions minutes. Override with the `recheck-allowed-associations` input. Set
+`recheck-trigger-phrase: ''` to disable the feature entirely.
+
 ## Configuration file
 
 Drop a `.mergebrake.yml` at the repository root and the action will pick it

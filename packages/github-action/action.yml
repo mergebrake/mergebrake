@@ -66,6 +66,14 @@ inputs:
     description: 'Optional path to a `.mergebrake.yml` config file. If omitted, MergeBrake auto-discovers one in the repository root.'
     required: false
     default: ''
+  recheck-trigger-phrase:
+    description: 'Phrase used to re-run MergeBrake from an `issue_comment` on a PR (case-insensitive substring match). Empty disables the feature.'
+    required: false
+    default: '@mergebrake recheck'
+  recheck-allowed-associations:
+    description: 'Comma-separated list of `author_association` values allowed to trigger a recheck (drives spam protection). Common values: OWNER, MEMBER, COLLABORATOR, CONTRIBUTOR, FIRST_TIMER, FIRST_TIME_CONTRIBUTOR, MANNEQUIN, NONE.'
+    required: false
+    default: 'OWNER,MEMBER,COLLABORATOR'
 
 outputs:
   verdict:
@@ -87,12 +95,80 @@ outputs:
 runs:
   using: composite
   steps:
+    - name: Resolve trigger
+      id: trigger
+      shell: bash
+      env:
+        TRIGGER_PHRASE: ${{ inputs.recheck-trigger-phrase }}
+        ALLOWED_ASSOCIATIONS: ${{ inputs.recheck-allowed-associations }}
+      run: |
+        case "${GITHUB_EVENT_NAME}" in
+          pull_request|pull_request_target)
+            echo "should-run=true" >> "$GITHUB_OUTPUT"
+            echo "needs-checkout=false" >> "$GITHUB_OUTPUT"
+            echo "MergeBrake: running on ${GITHUB_EVENT_NAME}."
+            exit 0
+            ;;
+          issue_comment)
+            ;;
+          *)
+            echo "MergeBrake: skipping unsupported event '${GITHUB_EVENT_NAME}'."
+            echo "should-run=false" >> "$GITHUB_OUTPUT"
+            exit 0
+            ;;
+        esac
+
+        if [ -z "${TRIGGER_PHRASE}" ]; then
+          echo "MergeBrake: recheck-trigger-phrase is empty; skipping issue_comment."
+          echo "should-run=false" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+
+        PR_URL=$(jq -r '.issue.pull_request.url // empty' "${GITHUB_EVENT_PATH}")
+        if [ -z "${PR_URL}" ]; then
+          echo "MergeBrake: comment is on an issue, not a PR. Skipping."
+          echo "should-run=false" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+        PR_NUMBER="${PR_URL##*/}"
+
+        BODY=$(jq -r '.comment.body // empty' "${GITHUB_EVENT_PATH}")
+        # Case-insensitive substring match.
+        if ! printf '%s' "${BODY}" | grep -iqF "${TRIGGER_PHRASE}"; then
+          echo "MergeBrake: comment does not contain '${TRIGGER_PHRASE}'. Skipping."
+          echo "should-run=false" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+
+        ASSOC=$(jq -r '.comment.author_association // "NONE"' "${GITHUB_EVENT_PATH}")
+        ALLOWED=$(printf '%s' "${ALLOWED_ASSOCIATIONS}" | tr ',' '\n' | awk '{$1=$1};1' | tr '[:lower:]' '[:upper:]')
+        if ! printf '%s\n' "${ALLOWED}" | grep -Fxq "${ASSOC}"; then
+          echo "MergeBrake: ignoring recheck request from author with association '${ASSOC}'." >&2
+          echo "MergeBrake: allowed associations are: ${ALLOWED_ASSOCIATIONS}." >&2
+          echo "should-run=false" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+
+        echo "MergeBrake: recheck triggered by ${ASSOC} on PR #${PR_NUMBER}."
+        echo "should-run=true" >> "$GITHUB_OUTPUT"
+        echo "needs-checkout=true" >> "$GITHUB_OUTPUT"
+        echo "pr-number=${PR_NUMBER}" >> "$GITHUB_OUTPUT"
+
+    - name: Check out PR head
+      if: steps.trigger.outputs.needs-checkout == 'true'
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        ref: refs/pull/${{ steps.trigger.outputs.pr-number }}/merge
+
     - name: Setup Node
+      if: steps.trigger.outputs.should-run == 'true'
       uses: actions/setup-node@v4
       with:
         node-version: 20
 
     - name: Collect commit messages for AI-PR detection
+      if: steps.trigger.outputs.should-run == 'true'
       shell: bash
       run: |
         if [ -n "${GITHUB_BASE_REF:-}" ]; then
@@ -107,6 +183,7 @@ runs:
 
     - name: Run MergeBrake (analysis)
       id: scan
+      if: steps.trigger.outputs.should-run == 'true'
       shell: bash
       env:
         MERGEBRAKE_VERSION: ${{ inputs.mergebrake-version }}
@@ -200,7 +277,7 @@ runs:
 
     - name: Post sticky PR comment
       id: comment
-      if: inputs.sticky-comment == 'true' && github.event_name == 'pull_request'
+      if: steps.trigger.outputs.should-run == 'true' && inputs.sticky-comment == 'true'
       shell: bash
       env:
         GITHUB_TOKEN: ${{ inputs.github-token || github.token }}
@@ -220,6 +297,7 @@ runs:
         fi
 
     - name: Enforce fail-on policy
+      if: steps.trigger.outputs.should-run == 'true'
       shell: bash
       env:
         VERDICT: ${{ steps.scan.outputs.verdict }}

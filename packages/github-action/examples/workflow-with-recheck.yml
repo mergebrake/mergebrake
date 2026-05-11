@@ -1,0 +1,47 @@
+# Example workflow that wires up MergeBrake on both `pull_request` events
+# (the default install path) and `issue_comment` events (the @mergebrake
+# recheck command). Copy to `.github/workflows/mergebrake.yml` in your repo
+# and adjust the path filters.
+
+name: MergeBrake
+
+on:
+  pull_request:
+    paths:
+      - 'prisma/**'
+      - 'drizzle/**'
+      - 'migrations/**'
+      - 'db/migrate/**'
+      - 'src/**'
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  pull-requests: write   # required for the sticky comment
+
+jobs:
+  schema-impact:
+    # Only run the job for PR events or PR-side comments. The action itself
+    # filters again on author association and trigger phrase, so this gate
+    # is just to avoid spinning up a runner for every issue comment.
+    if: >-
+      github.event_name == 'pull_request' ||
+      (github.event_name == 'issue_comment' && github.event.issue.pull_request != null)
+    runs-on: ubuntu-latest
+    steps:
+      # For pull_request events: a regular checkout is fine. For issue_comment
+      # events the MergeBrake action will check out the PR head itself, so we
+      # skip checkout here.
+      - if: github.event_name == 'pull_request'
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: mergebrake/mergebrake@v0
+        with:
+          fail-on: BLOCK
+          # Optional: pin the version your team has tested with
+          # mergebrake-version: 0.0.2
+          # Optional: tighten who can trigger a recheck
+          # recheck-allowed-associations: 'OWNER,MEMBER'
