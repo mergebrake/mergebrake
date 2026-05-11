@@ -1,5 +1,5 @@
 name: MergeBrake — schema impact guard
-description: Catch database-breaking PRs before merge by mapping schema changes to impacted app code.
+description: Catch database-breaking PRs before merge by mapping schema changes to impacted app code, with a sticky review comment.
 author: MergeBrake contributors
 branding:
   icon: shield
@@ -26,14 +26,48 @@ inputs:
     description: 'Force an ORM stack instead of auto-detection: prisma | drizzle | knex | sequelize | typeorm | raw-sql.'
     required: false
     default: ''
-  format:
-    description: 'Output format: terminal | markdown | github | json.'
-    required: false
-    default: github
   base-repo:
     description: Optional path to a base-branch checkout. Enables deploy-order checks for contract changes bundled with app cleanup.
     required: false
     default: ''
+  sticky-comment:
+    description: 'Post (or update) a sticky review comment on the pull request. Requires `permissions: pull-requests: write` and a token with that scope (default `${{ github.token }}`).'
+    required: false
+    default: 'true'
+  comment-marker:
+    description: Hidden marker used to find this comment on subsequent runs. Override when running MergeBrake more than once on the same PR (e.g. different stacks).
+    required: false
+    default: 'mergebrake:sticky-comment'
+  skip-comment-when-safe:
+    description: 'Skip posting when the verdict is SAFE with zero findings.'
+    required: false
+    default: 'false'
+  github-token:
+    description: 'Token used to post the sticky comment. Defaults to the workflow''s GITHUB_TOKEN.'
+    required: false
+    default: ${{ github.token }}
+  mergebrake-version:
+    description: 'Version of the `mergebrake` npm package to run (e.g. `0.0.1` or `latest`).'
+    required: false
+    default: 'latest'
+  output-annotations:
+    description: 'Emit GitHub `::error` / `::warning` annotations alongside the sticky comment (true|false).'
+    required: false
+    default: 'true'
+
+outputs:
+  verdict:
+    description: 'Final verdict: SAFE | EXPAND_CONTRACT | BLOCK.'
+    value: ${{ steps.scan.outputs.verdict }}
+  risk-score:
+    description: Aggregated risk score (sum of severity weights with AI-PR scrutiny applied).
+    value: ${{ steps.scan.outputs.risk-score }}
+  finding-count:
+    description: Number of findings reported by MergeBrake.
+    value: ${{ steps.scan.outputs.finding-count }}
+  comment-action:
+    description: 'Action performed for the sticky comment: created | updated | skipped.'
+    value: ${{ steps.comment.outputs.action }}
 
 runs:
   using: composite
@@ -42,25 +76,116 @@ runs:
       uses: actions/setup-node@v4
       with:
         node-version: 20
-    - name: Collect commit messages
+
+    - name: Collect commit messages for AI-PR detection
       shell: bash
       run: |
         if [ -n "${GITHUB_BASE_REF:-}" ]; then
-          git log --format='%B%n---' "origin/${GITHUB_BASE_REF}..HEAD" > /tmp/mergebrake-commits.txt
+          # In pull_request workflows, GITHUB_BASE_REF is the target branch.
+          # Fetch enough history to walk back to the merge base.
+          git fetch --no-tags --depth=50 origin "${GITHUB_BASE_REF}" >/dev/null 2>&1 || true
+          git log --format='%B%n---' "origin/${GITHUB_BASE_REF}..HEAD" \
+            > /tmp/mergebrake-commits.txt
         else
           git log -n 20 --format='%B%n---' HEAD > /tmp/mergebrake-commits.txt
         fi
-    - name: Run MergeBrake
+
+    - name: Run MergeBrake (analysis)
+      id: scan
       shell: bash
+      env:
+        MERGEBRAKE_VERSION: ${{ inputs.mergebrake-version }}
+        MERGEBRAKE_INPUTS: ${{ inputs.inputs }}
+        MERGEBRAKE_DIALECT: ${{ inputs.dialect }}
+        MERGEBRAKE_FAIL_ON: ${{ inputs.fail-on }}
+        MERGEBRAKE_ORM: ${{ inputs.orm }}
+        MERGEBRAKE_BASE_REPO: ${{ inputs.base-repo }}
+        MERGEBRAKE_ANNOTATIONS: ${{ inputs.output-annotations }}
       run: |
+        set -o pipefail
         ORM_FLAG=""
-        if [ -n "${{ inputs.orm }}" ]; then ORM_FLAG="--orm ${{ inputs.orm }}"; fi
+        if [ -n "${MERGEBRAKE_ORM}" ]; then ORM_FLAG="--orm ${MERGEBRAKE_ORM}"; fi
         BASE_REPO_FLAG=""
-        if [ -n "${{ inputs.base-repo }}" ]; then BASE_REPO_FLAG="--base-repo ${{ inputs.base-repo }}"; fi
-        npx --yes mergebrake@latest scan ${{ inputs.inputs }} \
-          --dialect "${{ inputs.dialect }}" \
-          --format "${{ inputs.format }}" \
+        if [ -n "${MERGEBRAKE_BASE_REPO}" ]; then BASE_REPO_FLAG="--base-repo ${MERGEBRAKE_BASE_REPO}"; fi
+
+        # Always produce a JSON report for the comment step; the exit code is
+        # carried by a separate invocation that respects `fail-on`.
+        npx --yes "mergebrake@${MERGEBRAKE_VERSION}" scan ${MERGEBRAKE_INPUTS} \
+          --dialect "${MERGEBRAKE_DIALECT}" \
+          --format json \
           --commits /tmp/mergebrake-commits.txt \
-          --fail-on "${{ inputs.fail-on }}" \
-          $ORM_FLAG \
-          $BASE_REPO_FLAG
+          --fail-on SAFE \
+          ${ORM_FLAG} \
+          ${BASE_REPO_FLAG} \
+          > /tmp/mergebrake-report.json 2>/tmp/mergebrake-scan.err \
+          || true  # never fail this step; failure policy is enforced below
+
+        if ! [ -s /tmp/mergebrake-report.json ]; then
+          echo "MergeBrake scan produced no report. stderr below:" >&2
+          cat /tmp/mergebrake-scan.err >&2 || true
+          exit 2
+        fi
+
+        VERDICT=$(node -e 'process.stdout.write(JSON.parse(require("fs").readFileSync("/tmp/mergebrake-report.json","utf-8")).verdict||"")')
+        RISK=$(node -e 'process.stdout.write(String(JSON.parse(require("fs").readFileSync("/tmp/mergebrake-report.json","utf-8")).riskScore||0))')
+        COUNT=$(node -e 'process.stdout.write(String((JSON.parse(require("fs").readFileSync("/tmp/mergebrake-report.json","utf-8")).findings||[]).length))')
+
+        echo "verdict=${VERDICT}" >> "${GITHUB_OUTPUT}"
+        echo "risk-score=${RISK}" >> "${GITHUB_OUTPUT}"
+        echo "finding-count=${COUNT}" >> "${GITHUB_OUTPUT}"
+
+        echo "MergeBrake verdict=${VERDICT} risk=${RISK} findings=${COUNT}"
+
+        if [ "${MERGEBRAKE_ANNOTATIONS}" = "true" ]; then
+          # Emit GitHub annotations alongside the sticky comment.
+          npx --yes "mergebrake@${MERGEBRAKE_VERSION}" scan ${MERGEBRAKE_INPUTS} \
+            --dialect "${MERGEBRAKE_DIALECT}" \
+            --format github \
+            --commits /tmp/mergebrake-commits.txt \
+            --fail-on SAFE \
+            ${ORM_FLAG} \
+            ${BASE_REPO_FLAG} \
+            || true
+        fi
+
+    - name: Post sticky PR comment
+      id: comment
+      if: inputs.sticky-comment == 'true' && github.event_name == 'pull_request'
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        MERGEBRAKE_VERSION: ${{ inputs.mergebrake-version }}
+        MERGEBRAKE_COMMENT_MARKER: ${{ inputs.comment-marker }}
+        MERGEBRAKE_SKIP_WHEN_SAFE: ${{ inputs.skip-comment-when-safe }}
+      run: |
+        SKIP_FLAG=""
+        if [ "${MERGEBRAKE_SKIP_WHEN_SAFE}" = "true" ]; then SKIP_FLAG="--skip-when-safe"; fi
+        npx --yes "mergebrake@${MERGEBRAKE_VERSION}" comment \
+          --from-file /tmp/mergebrake-report.json \
+          --marker "${MERGEBRAKE_COMMENT_MARKER}" \
+          ${SKIP_FLAG}
+        echo "action=posted" >> "${GITHUB_OUTPUT}"
+
+    - name: Enforce fail-on policy
+      shell: bash
+      env:
+        VERDICT: ${{ steps.scan.outputs.verdict }}
+        FINDING_COUNT: ${{ steps.scan.outputs.finding-count }}
+        FAIL_ON: ${{ inputs.fail-on }}
+      run: |
+        case "${FAIL_ON}" in
+          BLOCK)
+            if [ "${VERDICT}" = "BLOCK" ]; then exit 1; fi
+            ;;
+          EXPAND_CONTRACT)
+            if [ "${VERDICT}" != "SAFE" ]; then exit 1; fi
+            ;;
+          SAFE)
+            if [ "${FINDING_COUNT}" != "0" ]; then exit 1; fi
+            ;;
+          *)
+            echo "Unknown fail-on value: ${FAIL_ON}" >&2
+            exit 2
+            ;;
+        esac
+        echo "fail-on policy ${FAIL_ON} satisfied (verdict=${VERDICT})."

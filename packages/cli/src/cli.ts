@@ -1,16 +1,22 @@
 #!/usr/bin/env node
 import { Command } from "commander";
 import { analyzeMigration } from "@mergebrake/core";
+import type { AnalysisReport } from "@mergebrake/shared";
 import { renderMarkdown, renderTerminal, renderJson } from "./renderers.js";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import {
+  postStickyComment,
+  resolvePrNumber,
+  DEFAULT_STICKY_MARKER,
+} from "./github-comment.js";
 
 const program = new Command();
 
 program
   .name("mergebrake")
   .description(
-    "Hit the brake before AI-generated PRs hit production. Pre-merge guard for database migrations.",
+    "Catch database-breaking PRs before merge by mapping schema changes to impacted app code.",
   )
   .version("0.0.1");
 
@@ -84,6 +90,130 @@ program
       if (report.findings.length > 0) process.exit(1);
     }
   });
+
+program
+  .command("comment")
+  .description(
+    "Post or update a sticky MergeBrake comment on a pull request. " +
+      "Reads a JSON report from stdin (or --from-file) and reposts the latest verdict.",
+  )
+  .option("--from-file <path>", "Path to a JSON report (output of `mergebrake scan --format json`).")
+  .option("--from-stdin", "Read the JSON report from standard input.")
+  .option("--token <token>", "GitHub token. Defaults to $GITHUB_TOKEN.")
+  .option("--repo <owner/repo>", "Target repository slug. Defaults to $GITHUB_REPOSITORY.")
+  .option("--pr <number>", "Pull request number. Defaults to the GitHub Actions event payload.")
+  .option(
+    "--marker <id>",
+    "Hidden marker used to find this comment on subsequent runs.",
+    DEFAULT_STICKY_MARKER,
+  )
+  .option("--api-base <url>", "GitHub API base URL (for GitHub Enterprise).")
+  .option(
+    "--skip-when-safe",
+    "Do not post a comment when the verdict is SAFE with zero findings (useful for noisy repos).",
+  )
+  .option("--dry-run", "Print the body that would be posted and exit.")
+  .action(async (options) => {
+    const report = await loadReport({
+      fromFile: options.fromFile,
+      fromStdin: options.fromStdin === true,
+    });
+
+    if (
+      options.skipWhenSafe &&
+      report.verdict === "SAFE" &&
+      report.findings.length === 0
+    ) {
+      // eslint-disable-next-line no-console
+      console.error("mergebrake comment: verdict SAFE, skip-when-safe set, nothing to post.");
+      return;
+    }
+
+    if (options.dryRun) {
+      process.stdout.write(renderMarkdown(report));
+      return;
+    }
+
+    const token: string | undefined = options.token ?? process.env["GITHUB_TOKEN"];
+    if (!token) {
+      // eslint-disable-next-line no-console
+      console.error(
+        "mergebrake comment: missing GitHub token. Pass --token or set GITHUB_TOKEN.",
+      );
+      process.exit(2);
+    }
+
+    const repo: string | undefined =
+      options.repo ?? process.env["GITHUB_REPOSITORY"];
+    if (!repo) {
+      // eslint-disable-next-line no-console
+      console.error(
+        "mergebrake comment: missing repository slug. Pass --repo or set GITHUB_REPOSITORY.",
+      );
+      process.exit(2);
+    }
+
+    const resolveOpts: Parameters<typeof resolvePrNumber>[0] = {
+      readFile: (p) => readFile(p, "utf-8"),
+    };
+    if (options.pr !== undefined) resolveOpts.explicit = options.pr;
+    const eventPath = process.env["GITHUB_EVENT_PATH"];
+    if (eventPath) resolveOpts.eventPath = eventPath;
+    const ref = process.env["GITHUB_REF"];
+    if (ref) resolveOpts.ref = ref;
+    const prNumber = await resolvePrNumber(resolveOpts);
+    if (!prNumber) {
+      // eslint-disable-next-line no-console
+      console.error(
+        "mergebrake comment: could not determine PR number. Pass --pr or run inside a pull_request workflow.",
+      );
+      process.exit(2);
+    }
+
+    const result = await postStickyComment({
+      report,
+      token: token as string,
+      repo: repo as string,
+      prNumber,
+      marker: options.marker,
+      apiBase: options.apiBase,
+    });
+
+    // eslint-disable-next-line no-console
+    console.error(
+      `mergebrake comment: ${result.action} comment` +
+        (result.htmlUrl ? ` -> ${result.htmlUrl}` : "") +
+        (result.commentId ? ` (id=${result.commentId})` : ""),
+    );
+  });
+
+async function loadReport(opts: {
+  fromFile?: string;
+  fromStdin?: boolean;
+}): Promise<AnalysisReport> {
+  if (opts.fromFile) {
+    const raw = await readFile(path.resolve(opts.fromFile), "utf-8");
+    return JSON.parse(raw) as AnalysisReport;
+  }
+  if (opts.fromStdin) {
+    const raw = await readStdin();
+    return JSON.parse(raw) as AnalysisReport;
+  }
+  throw new Error(
+    "mergebrake comment: provide --from-file <path> or --from-stdin to load the report.",
+  );
+}
+
+function readStdin(): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const chunks: Buffer[] = [];
+    process.stdin.on("data", (chunk: Buffer) => chunks.push(chunk));
+    process.stdin.on("end", () =>
+      resolve(Buffer.concat(chunks).toString("utf-8")),
+    );
+    process.stdin.on("error", reject);
+  });
+}
 
 program.parseAsync().catch((err) => {
   // eslint-disable-next-line no-console

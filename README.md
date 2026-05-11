@@ -111,9 +111,20 @@ instances during rollout.
 
 ### CI / GitHub Action
 
+The bundled action posts a **sticky review comment** that updates on every push
+(no more comment spam), emits inline annotations, and enforces a configurable
+fail policy. Drop one workflow file into your repo:
+
 ```yaml
+# .github/workflows/mergebrake.yml
 name: MergeBrake
-on: pull_request
+on:
+  pull_request:
+    paths: ['prisma/**','drizzle/**','migrations/**','db/migrate/**','src/**']
+
+permissions:
+  contents: read
+  pull-requests: write   # required so MergeBrake can update its sticky comment
 
 jobs:
   schema-impact:
@@ -122,17 +133,34 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: actions/setup-node@v4
+      - uses: mergebrake/mergebrake@v0
         with:
-          node-version: 20
-      - name: Collect commit messages from PR
-        run: git log --format='%B%n---' origin/${{ github.event.pull_request.base.ref }}..HEAD > /tmp/commits.txt
-      - name: Run MergeBrake
-        run: npx mergebrake scan "prisma/migrations/**/migration.sql" --commits /tmp/commits.txt --format github
+          fail-on: BLOCK
 ```
 
-The `--format github` mode emits annotations on the migration line and a PR-ready
-Markdown report.
+Full action reference (inputs, outputs, deploy-order setup, multi-marker runs)
+is in [`packages/github-action/README.md`](./packages/github-action/README.md).
+
+### Sticky PR Comment Outside CI
+
+`mergebrake comment` reads a JSON report and updates (or creates) a sticky
+comment on a PR. It uses GitHub's REST API directly — no SDK, no extra deps —
+and is the same code path the action uses.
+
+```bash
+# In one shot via pipe
+mergebrake scan "prisma/migrations/**/migration.sql" --format json \
+  | mergebrake comment --from-stdin \
+      --token $GITHUB_TOKEN --repo octo/repo --pr 123
+
+# Or from a saved report
+mergebrake scan ... --format json > /tmp/report.json
+mergebrake comment --from-file /tmp/report.json
+```
+
+The comment is identified across runs by a hidden marker
+(`<!-- mergebrake:sticky-comment -->`). Use `--marker mergebrake:something` to
+post multiple independent sticky comments on the same PR.
 
 ## Output Formats
 

@@ -30,3 +30,19 @@ jobs:
             exit 1
           fi
           echo "Example: BLOCK detected as expected"
+      - name: Smoke — scan|comment pipe (dry-run)
+        run: |
+          set -o pipefail
+          node packages/cli/dist/cli.js scan \
+            "prisma/migrations/**/migration.sql" \
+            --repo "examples/prisma-drop-column" \
+            --commits "examples/prisma-drop-column/commits.txt" \
+            --format json \
+            --fail-on SAFE \
+            | node packages/cli/dist/cli.js comment --from-stdin --dry-run \
+            > /tmp/mergebrake-comment.md
+          grep -q "MergeBrake" /tmp/mergebrake-comment.md
+          grep -q "BLOCK" /tmp/mergebrake-comment.md
+          echo "scan|comment pipe smoke passed"
+      - name: Landing — HTML balance check
+        run: node website/scripts/check-html.mjs
