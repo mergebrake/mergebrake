@@ -1,5 +1,5 @@
-name: MergeBrake — schema impact guard
-description: Catch database-breaking PRs before merge by mapping schema changes to impacted app code, with a sticky review comment.
+name: MergeBrake
+description: Stop dangerous DB migrations before they merge. Maps Prisma / Drizzle schema changes to the app code they would break, with a sticky review comment.
 author: MergeBrake contributors
 branding:
   icon: shield
