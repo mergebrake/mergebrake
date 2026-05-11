@@ -1,5 +1,5 @@
 name: MergeBrake
-description: Stop dangerous DB migrations before they merge. Maps Prisma / Drizzle schema changes to the app code they would break, with a sticky review comment.
+description: Stop dangerous DB migrations before they merge. Maps Prisma/Drizzle schema changes to impacted app code.
 author: MergeBrake contributors
 branding:
   icon: shield
