@@ -35,5 +35,17 @@ issue this automatically).
 The page is one `index.html` file. Style tokens live in the inline
 `tailwind.config` block at the top — adjust `brake.500` to retheme.
 
-Open Graph image generation is intentionally deferred; the inline SVG favicon
-ships with the page and search engines will fall back to that.
+## Open Graph image
+
+`og.png` (1200 × 630) is the asset Twitter / LinkedIn / Slack pull when the
+page is shared. The source of truth is `og.svg` — edit that, then regenerate
+the PNG:
+
+```bash
+npm run og:build   # at the repo root
+```
+
+The script lives at `website/scripts/build-og.mjs` and uses
+[`@resvg/resvg-js`](https://www.npmjs.com/package/@resvg/resvg-js) (WASM, no
+native build) to rasterize the SVG. Commit both `og.svg` and `og.png` — the
+PNG is what consumers actually fetch.

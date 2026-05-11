@@ -10,9 +10,11 @@
     "build": "tsc -b packages/shared packages/core packages/cli",
     "test": "vitest run",
     "lint": "npm run lint --workspaces --if-present",
-    "clean": "npm run clean --workspaces --if-present"
+    "clean": "npm run clean --workspaces --if-present",
+    "og:build": "node website/scripts/build-og.mjs"
   },
   "devDependencies": {
+    "@resvg/resvg-js": "^2.6.2",
     "@types/node": "^20.14.0",
     "typescript": "^5.5.0",
     "vitest": "^2.0.0"

@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="630" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0b1020"/>
+      <stop offset="1" stop-color="#0f172a"/>
+    </linearGradient>
+    <radialGradient id="glowOrange" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(120 -40) scale(640)">
+      <stop offset="0" stop-color="#f97316" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#f97316" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowBlue" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1080 30) scale(560)">
+      <stop offset="0" stop-color="#38bdf8" stop-opacity="0.25"/>
+      <stop offset="1" stop-color="#38bdf8" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="grid" x="0" y="0" width="32" height="32" patternUnits="userSpaceOnUse">
+      <path d="M 32 0 L 0 0 0 32" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+    </pattern>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#grid)" opacity="0.6"/>
+  <rect width="1200" height="630" fill="url(#glowOrange)"/>
+  <rect width="1200" height="630" fill="url(#glowBlue)"/>
+
+  <!-- Logo + wordmark -->
+  <g transform="translate(80 72)">
+    <rect width="56" height="56" rx="14" fill="#0f172a" stroke="rgba(148,163,184,0.18)" stroke-width="1"/>
+    <path d="M14 34 H42 M14 26 H42 M28 12 L28 44" stroke="#f97316" stroke-width="5" stroke-linecap="round"/>
+  </g>
+  <text x="160" y="113" font-family="Inter, system-ui, sans-serif" font-size="32" font-weight="600" fill="#e2e8f0">MergeBrake</text>
+  <text x="160" y="143" font-family="Inter, system-ui, sans-serif" font-size="18" fill="#94a3b8">mergebrake.dev</text>
+
+  <!-- Headline -->
+  <text x="80" y="270" font-family="Inter, system-ui, sans-serif" font-size="68" font-weight="600" fill="#f8fafc" letter-spacing="-1.5">Catch database-breaking PRs</text>
+  <text x="80" y="346" font-family="Inter, system-ui, sans-serif" font-size="68" font-weight="600" fill="#f8fafc" letter-spacing="-1.5">
+    <tspan>before merge.</tspan>
+  </text>
+
+  <!-- Subtitle -->
+  <text x="80" y="408" font-family="Inter, system-ui, sans-serif" font-size="24" fill="#cbd5f5">
+    <tspan font-weight="500">Schema impact guard for Postgres apps —</tspan>
+  </text>
+  <text x="80" y="442" font-family="Inter, system-ui, sans-serif" font-size="24" fill="#cbd5f5">
+    <tspan>Prisma · Drizzle · Knex · Sequelize · TypeORM · raw SQL.</tspan>
+  </text>
+
+  <!-- Bottom stats -->
+  <g transform="translate(80 520)">
+    <text x="0" y="0" font-family="Inter, system-ui, sans-serif" font-size="18" fill="#94a3b8" font-weight="500">Dogfood on 3 open-source repos</text>
+
+    <g transform="translate(0 24)">
+      <text x="0" y="32" font-family="Inter, system-ui, sans-serif" font-size="40" font-weight="600" fill="#f8fafc">2,339</text>
+      <text x="0" y="58" font-family="Inter, system-ui, sans-serif" font-size="14" fill="#94a3b8" letter-spacing="0.5">findings</text>
+
+      <text x="190" y="32" font-family="Inter, system-ui, sans-serif" font-size="40" font-weight="600" fill="#f8fafc">1,066</text>
+      <text x="190" y="58" font-family="Inter, system-ui, sans-serif" font-size="14" fill="#94a3b8" letter-spacing="0.5">migrations</text>
+
+      <text x="380" y="32" font-family="Inter, system-ui, sans-serif" font-size="40" font-weight="600" fill="#f8fafc">21</text>
+      <text x="380" y="58" font-family="Inter, system-ui, sans-serif" font-size="14" fill="#94a3b8" letter-spacing="0.5">rules</text>
+
+      <text x="490" y="32" font-family="Inter, system-ui, sans-serif" font-size="40" font-weight="600" fill="#f8fafc">~30 ms</text>
+      <text x="490" y="58" font-family="Inter, system-ui, sans-serif" font-size="14" fill="#94a3b8" letter-spacing="0.5">median scan</text>
+    </g>
+  </g>
+
+  <!-- Verdict badge -->
+  <g transform="translate(900 80)">
+    <rect width="220" height="58" rx="29" fill="rgba(244,63,94,0.12)" stroke="rgba(244,63,94,0.6)" stroke-width="1.5"/>
+    <circle cx="34" cy="29" r="9" fill="#f43f5e"/>
+    <text x="56" y="36" font-family="Inter, system-ui, sans-serif" font-size="18" font-weight="600" fill="#fecdd3">BLOCK</text>
+    <text x="124" y="36" font-family="Inter, system-ui, sans-serif" font-size="14" fill="#fda4af">risk 30,698</text>
+  </g>
+
+  <!-- Code-ish card hint -->
+  <g transform="translate(720 200)" font-family="JetBrains Mono, ui-monospace, monospace" font-size="13" fill="#94a3b8">
+    <rect width="400" height="180" rx="14" fill="rgba(15,23,42,0.65)" stroke="rgba(148,163,184,0.18)" stroke-width="1"/>
+    <text x="20" y="30" fill="#64748b">migration.sql</text>
+    <text x="20" y="58" fill="#fb923c">ALTER TABLE users</text>
+    <text x="20" y="78" fill="#fb923c">  DROP COLUMN full_name;</text>
+    <text x="20" y="110" fill="#cbd5f5">App impact (3 refs):</text>
+    <text x="20" y="130" fill="#7dd3fc">src/api/profile.ts:9</text>
+    <text x="20" y="146" fill="#7dd3fc">src/api/users.ts:11</text>
+    <text x="20" y="162" fill="#7dd3fc">src/api/users.ts:18</text>
+  </g>
+</svg>
