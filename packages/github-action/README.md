@@ -1,7 +1,7 @@
 # MergeBrake — GitHub Action
 
 > Catch database-breaking PRs before merge. Sticky review comment + GitHub
-> annotations + configurable fail policy.
+> annotations for medium+ findings + configurable fail policy.
 
 ## Quick start
 
@@ -43,11 +43,15 @@ keeps the first install from failing on years of historical migrations. Set
 `scan-scope: all` when you intentionally want a full repository audit, or set
 `scan-scope` in `.mergebrake.yml`.
 
+The comment is tuned for reviewers: critical/high/medium findings are shown
+first, the main body is capped, and informational findings are collapsed. The
+full list is still available through JSON/SARIF for audits.
+
 ## What the comment shows
 
 - the verdict (`SAFE` 🟢 / `EXPAND_CONTRACT` 🟡 / `BLOCK` 🔴) and the risk score;
 - AI-PR signals (Claude / Cursor / Codex / Copilot / Aider / Devin co-authors);
-- every destructive or downtime-prone migration finding;
+- the top destructive or downtime-prone migration findings;
 - the lines in your application code that still read or write the columns the
   migration is about to break (using Prisma `@map` / Drizzle aliases to follow
   the rename);
@@ -68,7 +72,7 @@ keeps the first install from failing on years of historical migrations. Set
 | `skip-comment-when-safe` | `false` | Do not comment when the verdict is `SAFE` with zero findings. |
 | `github-token` | `${{ github.token }}` | Token used to post the sticky comment. |
 | `mergebrake-version` | `latest` | Pin the `mergebrake` npm version. |
-| `output-annotations` | `true` | Also emit inline `::error` / `::warning` annotations. |
+| `output-annotations` | `true` | Also emit inline `::error` / `::warning` annotations for medium+ findings. |
 | `sarif-file` | _empty_ | Write a SARIF 2.1.0 report to this path for `github/codeql-action/upload-sarif`. |
 | `config` | _empty_ | Explicit path to a `.mergebrake.yml`. Auto-discovered when omitted. |
 

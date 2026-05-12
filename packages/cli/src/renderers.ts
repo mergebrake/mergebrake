@@ -1,10 +1,21 @@
 import type { AnalysisReport, Finding, Verdict } from "mergebrake-shared";
 import pc from "picocolors";
 
+const MARKDOWN_MAIN_FINDING_LIMIT = 20;
+const MARKDOWN_COLLAPSED_FINDING_LIMIT = 25;
+
 const VERDICT_BADGE: Record<Verdict, string> = {
   SAFE: "🟢 SAFE",
   EXPAND_CONTRACT: "🟡 EXPAND / CONTRACT REQUIRED",
   BLOCK: "🔴 BLOCK — data loss or downtime risk",
+};
+
+const SEVERITY_RANK: Record<Finding["severity"], number> = {
+  critical: 0,
+  high: 1,
+  medium: 2,
+  low: 3,
+  info: 4,
 };
 
 export function renderTerminal(report: AnalysisReport): string {
@@ -15,6 +26,9 @@ export function renderTerminal(report: AnalysisReport): string {
   out.push(`Verdict:    ${colorVerdict(report.verdict)}`);
   out.push(`Risk score: ${report.riskScore}`);
   out.push(`ORM stack:  ${report.ormStack}    Dialect: ${report.dialect}`);
+  if (report.findings.length > 0) {
+    out.push(`Findings:   ${formatSeverityCounts(report.findings)}`);
+  }
   if (report.aiPrSignals.isLikelyAiGenerated) {
     const factor = report.aiPrSignals.scrutinyMultiplier.toFixed(2);
     out.push(
@@ -97,14 +111,34 @@ export function renderMarkdown(
     return out.join("\n") + "\n";
   }
 
-  for (let i = 0; i < report.findings.length; i++) {
-    out.push(renderFindingMarkdown(report.findings[i]!, i + 1));
+  const review = splitFindingsForReview(report.findings);
+  out.push(`**Findings:** ${formatSeverityCounts(report.findings)}`);
+  if (review.hiddenCount > 0) {
+    out.push(
+      `_Showing ${review.visible.length} actionable finding${review.visible.length === 1 ? "" : "s"}. ${review.hiddenCount} additional finding${review.hiddenCount === 1 ? "" : "s"} are collapsed below; full output stays available in JSON/SARIF._`,
+    );
+  }
+  out.push("");
+
+  for (let i = 0; i < review.visible.length; i++) {
+    out.push(renderFindingMarkdown(review.visible[i]!, i + 1));
+    out.push("");
+  }
+
+  if (review.overflow.length > 0) {
+    out.push(renderCollapsedFindings("Additional actionable findings", review.overflow));
+    out.push("");
+  }
+
+  if (review.info.length > 0) {
+    out.push(renderCollapsedFindings("Informational findings collapsed", review.info));
     out.push("");
   }
 
   if (opts.githubAnnotations) {
     for (const f of report.findings) {
-      const lvl = f.severity === "critical" || f.severity === "high" ? "error" : "warning";
+      const lvl = githubAnnotationLevel(f);
+      if (!lvl) continue;
       const msg = escapeGitHubAnnotationMessage(f.title);
       const file = escapeGitHubAnnotationProperty(f.location.file);
       const title = escapeGitHubAnnotationProperty("MergeBrake");
@@ -117,6 +151,60 @@ export function renderMarkdown(
   out.push("");
   out.push(`<sub>Scanned in ${report.durationMs}ms by MergeBrake.</sub>`);
   return out.join("\n") + "\n";
+}
+
+function splitFindingsForReview(findings: Finding[]): {
+  visible: Finding[];
+  overflow: Finding[];
+  info: Finding[];
+  hiddenCount: number;
+} {
+  const sorted = sortFindingsForReview(findings);
+  const actionable = sorted.filter((f) => f.severity !== "info");
+  const visible = actionable.slice(0, MARKDOWN_MAIN_FINDING_LIMIT);
+  const overflow = actionable.slice(MARKDOWN_MAIN_FINDING_LIMIT);
+  const info = sorted.filter((f) => f.severity === "info");
+  return {
+    visible,
+    overflow,
+    info,
+    hiddenCount: overflow.length + info.length,
+  };
+}
+
+function sortFindingsForReview(findings: Finding[]): Finding[] {
+  return [...findings].sort((a, b) => {
+    const severityDelta = SEVERITY_RANK[a.severity] - SEVERITY_RANK[b.severity];
+    if (severityDelta !== 0) return severityDelta;
+
+    const impactDelta = Number(b.crossRefs.length > 0) - Number(a.crossRefs.length > 0);
+    if (impactDelta !== 0) return impactDelta;
+
+    const fileDelta = a.location.file.localeCompare(b.location.file);
+    if (fileDelta !== 0) return fileDelta;
+
+    return a.location.line - b.location.line;
+  });
+}
+
+function renderCollapsedFindings(title: string, findings: Finding[]): string {
+  const out: string[] = [];
+  const shown = findings.slice(0, MARKDOWN_COLLAPSED_FINDING_LIMIT);
+  const rest = findings.length - shown.length;
+
+  out.push(`<details><summary><strong>${title}</strong> (${findings.length})</summary>`);
+  out.push("");
+  for (const f of shown) {
+    out.push(
+      `- ${sevEmoji(f.severity)} \`${f.ruleId}\` at \`${f.location.file}:${f.location.line}\` - ${f.title}`,
+    );
+  }
+  if (rest > 0) {
+    out.push(`- ... and ${rest} more. Use \`--format json\` or SARIF for the complete list.`);
+  }
+  out.push("");
+  out.push("</details>");
+  return out.join("\n");
 }
 
 function renderFindingMarkdown(f: Finding, idx: number): string {
@@ -198,6 +286,27 @@ function sevEmoji(sev: Finding["severity"]): string {
     default:
       return "ℹ️";
   }
+}
+
+function formatSeverityCounts(findings: Finding[]): string {
+  const counts: Record<Finding["severity"], number> = {
+    critical: 0,
+    high: 0,
+    medium: 0,
+    low: 0,
+    info: 0,
+  };
+  for (const finding of findings) counts[finding.severity] += 1;
+  return (["critical", "high", "medium", "low", "info"] as const)
+    .filter((severity) => counts[severity] > 0)
+    .map((severity) => `${counts[severity]} ${severity}`)
+    .join(", ");
+}
+
+function githubAnnotationLevel(f: Finding): "error" | "warning" | null {
+  if (f.severity === "critical" || f.severity === "high") return "error";
+  if (f.severity === "medium") return "warning";
+  return null;
 }
 
 function colorVerdict(v: Verdict): string {

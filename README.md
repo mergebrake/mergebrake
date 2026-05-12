@@ -139,10 +139,11 @@ instances during rollout.
 ### CI / GitHub Action
 
 The bundled action posts a **sticky review comment** that updates on every push
-(no more comment spam), emits inline annotations, and enforces a configurable
-fail policy. Pull request runs scan changed migration files by default, so the
-first install does not fail on years of historical migration debt. Drop one
-workflow file into your repo:
+(no comment spam), emits inline annotations for medium+ findings, and enforces
+a configurable fail policy. Pull request runs scan changed migration files by
+default, so the first install does not fail on years of historical migration
+debt. Low/info findings stay in the report but are collapsed out of the main PR
+comment. Drop one workflow file into your repo:
 
 ```yaml
 # .github/workflows/mergebrake.yml
@@ -190,6 +191,21 @@ mergebrake comment --from-file /tmp/report.json
 The comment is identified across runs by a hidden marker
 (`<!-- mergebrake:sticky-comment -->`). Use `--marker mergebrake:something` to
 post multiple independent sticky comments on the same PR.
+
+## Noise Control
+
+MergeBrake is meant to stop risky PRs, not turn historical migration debt into
+a wall of warnings.
+
+- PR runs default to `scan-scope: changed`, so only migration files touched by
+  the pull request are reviewed.
+- The sticky comment shows the top actionable findings first, caps the main
+  review body, and collapses informational findings.
+- Inline GitHub annotations are emitted only for `critical`, `high`, and
+  `medium`; `low` and `info` remain in Markdown/JSON/SARIF without cluttering
+  the diff.
+- Historical audits should use `--format json` or SARIF plus `.mergebrake.yml`
+  overrides for legacy paths.
 
 ## Configuration (`.mergebrake.yml`)
 
@@ -246,8 +262,9 @@ to disable auto-discovery.
     category: mergebrake
 ```
 
-Findings then surface in the **Security › Code scanning** tab and inline in
-the PR diff, with the same severity mapping the sticky comment uses.
+Findings then surface in the **Security > Code scanning** tab. The sticky PR
+comment stays focused on the top actionable findings, while SARIF keeps the
+complete machine-readable list.
 
 ## Fail Policy
 
