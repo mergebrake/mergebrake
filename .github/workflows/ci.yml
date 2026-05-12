@@ -38,14 +38,34 @@ jobs:
           echo "Example: BLOCK detected as expected"
       - name: Smoke — scan|comment pipe (dry-run)
         run: |
-          set -o pipefail
+          # GitHub Actions runs every shell step with `bash -eo pipefail`.
+          # The scan exits 1 by design here (verdict is BLOCK, which is "not
+          # SAFE" under --fail-on SAFE), and that 1 propagates through the
+          # pipe and kills the script before we can verify the comment was
+          # rendered. Save the report to a tmpfile under set +e, then pipe
+          # it through `comment` separately — that way we still test the
+          # scan->comment flow end-to-end without fighting the shell's
+          # exit-on-error semantics.
+          set +e
           node packages/cli/dist/cli.js scan \
             "prisma/migrations/**/migration.sql" \
             --repo "examples/prisma-drop-column" \
             --commits "examples/prisma-drop-column/commits.txt" \
             --format json \
             --fail-on SAFE \
-            | node packages/cli/dist/cli.js comment --from-stdin --dry-run \
+            > /tmp/mergebrake-report.json
+          scan_code=$?
+          set -e
+          if [ "$scan_code" -ne 1 ]; then
+            echo "Expected scan to exit 1 (BLOCK verdict under --fail-on SAFE), got $scan_code"
+            exit 1
+          fi
+          if ! [ -s /tmp/mergebrake-report.json ]; then
+            echo "scan produced an empty report"
+            exit 1
+          fi
+          node packages/cli/dist/cli.js comment --from-stdin --dry-run \
+            < /tmp/mergebrake-report.json \
             > /tmp/mergebrake-comment.md
           grep -q "MergeBrake" /tmp/mergebrake-comment.md
           grep -q "BLOCK" /tmp/mergebrake-comment.md
