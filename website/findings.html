@@ -316,6 +316,90 @@
         </div>
       </section>
 
+      <!-- PUBLIC AUDITS -->
+      <section class="border-t border-slate-800/60 py-20">
+        <div class="mx-auto max-w-5xl px-6">
+          <h2 class="text-3xl font-semibold tracking-tight md:text-4xl">
+            Five more public audits on community repos
+          </h2>
+          <p class="mt-4 max-w-3xl text-lg text-slate-300">
+            Single-page audits with executive summary, severity breakdown, the
+            top 8 most-severe findings (with GitHub permalinks down to the line
+            number), and a calibrated <code class="text-brake-300">.mergebrake.yml</code>
+            for each repo. Run with the default ruleset, no overrides.
+          </p>
+
+          <div class="mt-10 grid gap-5 md:grid-cols-2">
+            <a class="group rounded-2xl border border-slate-800/60 bg-slate-900/40 p-5 transition hover:border-brake-500/60"
+               href="https://gist.github.com/IbraChar03/2d1a88d533dd2a718e2162805dc9cc1b" target="_blank" rel="noopener">
+              <div class="flex items-baseline justify-between">
+                <div class="font-semibold text-white group-hover:text-brake-400">papermark/papermark</div>
+                <span class="text-xs text-slate-500">prisma · ★8.2k</span>
+              </div>
+              <div class="mt-2 flex items-baseline gap-3">
+                <div class="text-2xl font-semibold text-rose-300">381</div>
+                <div class="text-xs uppercase tracking-wider text-slate-400">findings · risk 5,530 · 🔴 BLOCK</div>
+              </div>
+              <p class="mt-2 text-sm text-slate-400">Document sharing platform. 3 critical DROP COLUMN + 198 high-severity locking patterns.</p>
+            </a>
+            <a class="group rounded-2xl border border-slate-800/60 bg-slate-900/40 p-5 transition hover:border-brake-500/60"
+               href="https://gist.github.com/IbraChar03/c4a0098ff48d26046a5175055c52e41c" target="_blank" rel="noopener">
+              <div class="flex items-baseline justify-between">
+                <div class="font-semibold text-white group-hover:text-brake-400">pdovhomilja/nextcrm-app</div>
+                <span class="text-xs text-slate-500">prisma · ★605</span>
+              </div>
+              <div class="mt-2 flex items-baseline gap-3">
+                <div class="text-2xl font-semibold text-rose-300">384</div>
+                <div class="text-xs uppercase tracking-wider text-slate-400">findings · risk 5,125 · 🔴 BLOCK</div>
+              </div>
+              <p class="mt-2 text-sm text-slate-400">Open-source CRM. 13 critical changes + heavy non-concurrent index usage.</p>
+            </a>
+            <a class="group rounded-2xl border border-slate-800/60 bg-slate-900/40 p-5 transition hover:border-brake-500/60"
+               href="https://gist.github.com/IbraChar03/629f2ccc8c4c754f2392831e2bd8708f" target="_blank" rel="noopener">
+              <div class="flex items-baseline justify-between">
+                <div class="font-semibold text-white group-hover:text-brake-400">ghostfolio/ghostfolio</div>
+                <span class="text-xs text-slate-500">prisma · ★8.4k</span>
+              </div>
+              <div class="mt-2 flex items-baseline gap-3">
+                <div class="text-2xl font-semibold text-rose-300">186</div>
+                <div class="text-xs uppercase tracking-wider text-slate-400">findings · risk 2,715 · 🔴 BLOCK</div>
+              </div>
+              <p class="mt-2 text-sm text-slate-400">Wealth management. 8 critical + enum rename patterns that silently break consumers.</p>
+            </a>
+            <a class="group rounded-2xl border border-slate-800/60 bg-slate-900/40 p-5 transition hover:border-brake-500/60"
+               href="https://gist.github.com/IbraChar03/081f68f2673332cbaad30d6730bfee36" target="_blank" rel="noopener">
+              <div class="flex items-baseline justify-between">
+                <div class="font-semibold text-white group-hover:text-brake-400">felipegcoutinho/openmonetis</div>
+                <span class="text-xs text-slate-500">drizzle · ★248</span>
+              </div>
+              <div class="mt-2 flex items-baseline gap-3">
+                <div class="text-2xl font-semibold text-rose-300">153</div>
+                <div class="text-xs uppercase tracking-wider text-slate-400">findings · risk 2,575 · 🔴 BLOCK</div>
+              </div>
+              <p class="mt-2 text-sm text-slate-400">Personal finance, Drizzle ORM. 10 critical + repeated DROP INDEX without CONCURRENTLY.</p>
+            </a>
+            <a class="group rounded-2xl border border-slate-800/60 bg-slate-900/40 p-5 transition hover:border-brake-500/60 md:col-span-2"
+               href="https://gist.github.com/IbraChar03/8d6e47372a1ec4e26a0affb8b62bd9f6" target="_blank" rel="noopener">
+              <div class="flex items-baseline justify-between">
+                <div class="font-semibold text-white group-hover:text-brake-400">jellydn/next-app-starter</div>
+                <span class="text-xs text-slate-500">prisma · ★281</span>
+              </div>
+              <div class="mt-2 flex items-baseline gap-3">
+                <div class="text-2xl font-semibold text-rose-300">8</div>
+                <div class="text-xs uppercase tracking-wider text-slate-400">findings · risk 143 · 🔴 BLOCK</div>
+              </div>
+              <p class="mt-2 text-sm text-slate-400">Next.js + Prisma starter template. Out-of-the-box <code class="text-brake-300">prisma migrate dev</code> output produces 5 high-severity locking warnings — same patterns inherited by every project bootstrapped from it.</p>
+            </a>
+          </div>
+
+          <p class="mt-6 text-sm text-slate-500">
+            None of these projects are doing migrations wrong; they ship at the
+            speed real teams ship. The findings are the kind of rollout-risk
+            comments MergeBrake would post inline on PRs touching the migrations folder.
+          </p>
+        </div>
+      </section>
+
       <!-- REAL EXAMPLES -->
       <section class="border-t border-slate-800/60 bg-slate-950/40 py-20">
         <div class="mx-auto max-w-5xl px-6">
