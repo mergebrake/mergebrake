@@ -27,9 +27,13 @@ inputs:
     required: false
     default: ''
   base-repo:
-    description: Optional path to a base-branch checkout. Enables deploy-order checks for contract changes bundled with app cleanup.
+    description: Explicit path to a base-branch checkout. Takes precedence over `base-checkout`. Use this if you have a non-standard checkout layout.
     required: false
     default: ''
+  base-checkout:
+    description: 'Automatically check out the PR base branch into `__mergebrake_base/` and use it for deploy-order analysis. Default `true` — that is the headline MergeBrake capability (catching contract-without-expand). Set to `false` for forks that can''t access the base, or pair with `base-repo` to override the path.'
+    required: false
+    default: 'true'
   scan-scope:
     description: 'Files to scan in pull_request workflows: changed | all. Empty means `.mergebrake.yml` decides, falling back to changed.'
     required: false
@@ -188,6 +192,26 @@ runs:
         fetch-depth: 0
         ref: refs/pull/${{ steps.trigger.outputs.pr-number }}/merge
 
+    # Deploy-order analysis ("contract-without-expand") needs to see the base
+    # branch's app code, not just the PR head. We auto-fetch a shallow base
+    # checkout into `__mergebrake_base/` so users get this for free instead of
+    # having to wire a second `actions/checkout` themselves. Skipped if the
+    # caller passed an explicit `base-repo`, or set `base-checkout: false`, or
+    # the trigger didn't resolve a base ref (e.g. push events, forked PR
+    # without base access).
+    - name: Check out PR base (deploy-order analysis)
+      if: |
+        steps.trigger.outputs.should-run == 'true' &&
+        inputs.base-checkout == 'true' &&
+        inputs.base-repo == '' &&
+        steps.trigger.outputs.base-ref != ''
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        ref: ${{ steps.trigger.outputs.base-ref }}
+        path: __mergebrake_base
+      continue-on-error: true
+
     - name: Setup Node
       if: steps.trigger.outputs.should-run == 'true'
       uses: actions/setup-node@v4
@@ -221,7 +245,15 @@ runs:
         MERGEBRAKE_DIALECT: ${{ inputs.dialect }}
         MERGEBRAKE_FAIL_ON: ${{ inputs.fail-on }}
         MERGEBRAKE_ORM: ${{ inputs.orm }}
+        # Resolution order for --base-repo:
+        #   1. inputs.base-repo (explicit override, takes precedence)
+        #   2. __mergebrake_base/ if the auto-checkout step actually ran
+        #      (base-checkout=true + base ref resolved + no explicit override)
+        #   3. empty (no deploy-order analysis)
+        # The shell step below additionally verifies the directory exists in
+        # case the auto-checkout step failed (continue-on-error: true).
         MERGEBRAKE_BASE_REPO: ${{ inputs.base-repo }}
+        MERGEBRAKE_BASE_CHECKOUT: ${{ inputs.base-checkout }}
         MERGEBRAKE_BASE_REF: ${{ steps.trigger.outputs.base-ref }}
         MERGEBRAKE_SCAN_SCOPE: ${{ inputs.scan-scope }}
         MERGEBRAKE_DEFAULT_SCAN_SCOPE: changed
@@ -233,7 +265,12 @@ runs:
         ORM_FLAG=""
         if [ -n "${MERGEBRAKE_ORM}" ]; then ORM_FLAG="--orm ${MERGEBRAKE_ORM}"; fi
         BASE_REPO_FLAG=""
-        if [ -n "${MERGEBRAKE_BASE_REPO}" ]; then BASE_REPO_FLAG="--base-repo ${MERGEBRAKE_BASE_REPO}"; fi
+        if [ -n "${MERGEBRAKE_BASE_REPO}" ]; then
+          BASE_REPO_FLAG="--base-repo ${MERGEBRAKE_BASE_REPO}"
+        elif [ "${MERGEBRAKE_BASE_CHECKOUT}" = "true" ] && [ -d "__mergebrake_base" ]; then
+          BASE_REPO_FLAG="--base-repo __mergebrake_base"
+          echo "MergeBrake: deploy-order analysis enabled (base ref: ${MERGEBRAKE_BASE_REF})."
+        fi
         CONFIG_FLAG=""
         if [ -n "${MERGEBRAKE_CONFIG}" ]; then CONFIG_FLAG="--config ${MERGEBRAKE_CONFIG}"; fi
         SCOPE_FLAG=""
