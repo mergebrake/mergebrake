@@ -40,13 +40,14 @@ These are the spectacular ones. The boring ones are far more common: an agent
 drops a column from a Prisma schema and the application keeps reading it via
 its camelCase alias, so deploy succeeds and the next request crashes.
 
-Existing tools cover slivers of this:
+Existing tools cover important parts of this:
 
-- **Squawk / pgfence / Atlas** lint the SQL.
+- **Squawk / pgfence / Atlas / MigrationPilot** lint the SQL.
 - **CodeRabbit / Greptile / Cursor Bugbot** review the diff.
 
-Neither side connects the schema change to the code that will break. That's
-the gap MergeBrake sits in.
+MergeBrake is narrower: the gap it tests is ORM-aware schema impact in the PR
+comment, especially Prisma `@map` / Drizzle aliases mapped back to the app code
+that still depends on the column.
 
 ## What it does
 
@@ -151,10 +152,11 @@ I'd love feedback on the ruleset and which patterns I missed. The
 > Author here. I built this after seeing the same failure pattern in PocketOS,
 > Replit/SaaStr, and Prisma's official AI-agent guardrails for destructive
 > migrate/reset commands. Happy to answer questions on the ruleset, the
-> libpg_query integration, or how MergeBrake differs from Squawk/pgfence/Atlas
-> (TL;DR: those lint SQL, MergeBrake also reads your ORM mapping and your
-> application code). Source + dogfood case studies on three real OSS Postgres
-> repos (1,066 migrations / 2,339 findings) here:
+> libpg_query integration, or how MergeBrake differs from
+> Squawk/pgfence/Atlas/MigrationPilot (TL;DR: those focus on SQL migration
+> safety; MergeBrake's wedge is ORM-aware app-code impact for Prisma/Drizzle
+> PRs). Source + dogfood case studies on three real OSS Postgres repos
+> (1,066 migrations / 2,339 findings) here:
 > https://github.com/mergebrake/mergebrake/tree/main/examples/dogfood
 
 **Tags for crossposting**:
