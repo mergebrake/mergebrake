@@ -660,17 +660,33 @@ npx mergebrake scan ... --fail-on BLOCK</pre>
       <section class="border-t border-slate-800/60 bg-slate-950/40 py-20">
         <div class="mx-auto max-w-5xl px-6">
           <h2 class="text-3xl font-semibold tracking-tight md:text-4xl">
-            What MergeBrake does that linters and AI reviewers don't
+            How MergeBrake compares to the tools you might already use
           </h2>
+          <p class="mt-3 max-w-3xl text-sm text-slate-400">
+            Honest side-by-side with the actual leaders in the space. If
+            you're already happy with Squawk or pgfence, that is a real
+            answer — MergeBrake is what you reach for when the gap below
+            matters.
+          </p>
           <div
-            class="mt-8 overflow-hidden rounded-2xl border border-slate-800/60"
+            class="mt-8 overflow-x-auto rounded-2xl border border-slate-800/60"
           >
-            <table class="w-full table-auto text-sm">
+            <table class="w-full min-w-[760px] table-auto text-sm">
               <thead class="bg-slate-900/60 text-left text-xs uppercase tracking-wider text-slate-400">
                 <tr>
                   <th class="px-5 py-3">Capability</th>
-                  <th class="px-5 py-3">SQL linters</th>
-                  <th class="px-5 py-3">AI code reviewers</th>
+                  <th class="px-5 py-3">
+                    <a class="hover:text-white" href="https://squawkhq.com/" target="_blank" rel="noopener">Squawk</a>
+                  </th>
+                  <th class="px-5 py-3">
+                    <a class="hover:text-white" href="https://pgfence.com/" target="_blank" rel="noopener">pgfence</a>
+                  </th>
+                  <th class="px-5 py-3">
+                    <a class="hover:text-white" href="https://atlasgo.io/" target="_blank" rel="noopener">Atlas</a>
+                  </th>
+                  <th class="px-5 py-3">
+                    <a class="hover:text-white" href="https://www.coderabbit.ai/" target="_blank" rel="noopener">CodeRabbit</a>
+                  </th>
                   <th class="px-5 py-3 text-brake-300">MergeBrake</th>
                 </tr>
               </thead>
@@ -678,56 +694,102 @@ npx mergebrake scan ... --fail-on BLOCK</pre>
                 <tr>
                   <td class="px-5 py-3">Destructive DDL detection</td>
                   <td class="px-5 py-3 text-emerald-400">✓</td>
+                  <td class="px-5 py-3 text-emerald-400">✓</td>
+                  <td class="px-5 py-3 text-emerald-400">✓</td>
                   <td class="px-5 py-3 text-slate-500">—</td>
                   <td class="px-5 py-3 text-emerald-400">✓</td>
                 </tr>
                 <tr>
                   <td class="px-5 py-3">Lock mode &amp; downtime checks</td>
                   <td class="px-5 py-3 text-emerald-400">✓</td>
+                  <td class="px-5 py-3 text-emerald-400">✓</td>
+                  <td class="px-5 py-3 text-emerald-400">✓</td>
                   <td class="px-5 py-3 text-slate-500">—</td>
                   <td class="px-5 py-3 text-emerald-400">✓</td>
                 </tr>
                 <tr>
-                  <td class="px-5 py-3">
-                    ORM-aware impact (<code>@map</code>, Drizzle aliases)
+                  <td class="px-5 py-3">ORM file detection (Prisma / Drizzle)</td>
+                  <td class="px-5 py-3 text-slate-500">—</td>
+                  <td class="px-5 py-3 text-emerald-400">✓</td>
+                  <td class="px-5 py-3 text-emerald-400">✓</td>
+                  <td class="px-5 py-3 text-slate-500">—</td>
+                  <td class="px-5 py-3 text-emerald-400">✓</td>
+                </tr>
+                <tr class="bg-brake-500/5">
+                  <td class="px-5 py-3 font-medium text-white">
+                    Cross-surface app-code map<br>
+                    <span class="text-xs text-slate-400">e.g. <code>@map(&quot;full_name&quot;)</code> resolved to <code>User.fullName</code> usages</span>
                   </td>
                   <td class="px-5 py-3 text-slate-500">—</td>
                   <td class="px-5 py-3 text-slate-500">—</td>
-                  <td class="px-5 py-3 text-emerald-400">✓</td>
+                  <td class="px-5 py-3 text-slate-500">—</td>
+                  <td class="px-5 py-3 text-amber-300">generic</td>
+                  <td class="px-5 py-3 text-emerald-400">✓ <strong class="text-brake-300">only one</strong></td>
+                </tr>
+                <tr class="bg-brake-500/5">
+                  <td class="px-5 py-3 font-medium text-white">
+                    AI-PR scrutiny multiplier<br>
+                    <span class="text-xs text-slate-400">flags <code>Co-Authored-By: Claude/Cursor/Codex</code> and raises severity</span>
+                  </td>
+                  <td class="px-5 py-3 text-slate-500">—</td>
+                  <td class="px-5 py-3 text-slate-500">—</td>
+                  <td class="px-5 py-3 text-slate-500">—</td>
+                  <td class="px-5 py-3 text-slate-500">—</td>
+                  <td class="px-5 py-3 text-emerald-400">✓ <strong class="text-brake-300">only one</strong></td>
+                </tr>
+                <tr class="bg-brake-500/5">
+                  <td class="px-5 py-3 font-medium text-white">
+                    Fresh-table noise demotion<br>
+                    <span class="text-xs text-slate-400">silences theoretical locks on tables created in the same migration</span>
+                  </td>
+                  <td class="px-5 py-3 text-slate-500">—</td>
+                  <td class="px-5 py-3 text-slate-500">—</td>
+                  <td class="px-5 py-3 text-slate-500">—</td>
+                  <td class="px-5 py-3 text-slate-500">—</td>
+                  <td class="px-5 py-3 text-emerald-400">✓ <strong class="text-brake-300">only one</strong></td>
                 </tr>
                 <tr>
-                  <td class="px-5 py-3">App-code references for every change</td>
+                  <td class="px-5 py-3">Deploy-order: contract-without-expand</td>
+                  <td class="px-5 py-3 text-slate-500">—</td>
                   <td class="px-5 py-3 text-slate-500">—</td>
                   <td class="px-5 py-3 text-amber-300">partial</td>
-                  <td class="px-5 py-3 text-emerald-400">✓</td>
-                </tr>
-                <tr>
-                  <td class="px-5 py-3">
-                    Deploy-order: contract-without-expand
-                  </td>
-                  <td class="px-5 py-3 text-slate-500">—</td>
                   <td class="px-5 py-3 text-slate-500">—</td>
                   <td class="px-5 py-3 text-emerald-400">✓</td>
                 </tr>
                 <tr>
-                  <td class="px-5 py-3">AI-PR scrutiny multiplier</td>
-                  <td class="px-5 py-3 text-slate-500">—</td>
-                  <td class="px-5 py-3 text-slate-500">—</td>
+                  <td class="px-5 py-3">Sticky PR comment that auto-updates</td>
+                  <td class="px-5 py-3 text-emerald-400">✓</td>
+                  <td class="px-5 py-3 text-amber-300">partial</td>
+                  <td class="px-5 py-3 text-emerald-400">✓</td>
+                  <td class="px-5 py-3 text-emerald-400">✓</td>
                   <td class="px-5 py-3 text-emerald-400">✓</td>
                 </tr>
                 <tr>
-                  <td class="px-5 py-3">Sticky PR comment that updates</td>
-                  <td class="px-5 py-3 text-slate-500">—</td>
-                  <td class="px-5 py-3 text-emerald-400">✓</td>
-                  <td class="px-5 py-3 text-emerald-400">✓</td>
+                  <td class="px-5 py-3">License</td>
+                  <td class="px-5 py-3 text-slate-300">MIT / Apache</td>
+                  <td class="px-5 py-3 text-slate-300">OSS</td>
+                  <td class="px-5 py-3 text-slate-300">Open-core</td>
+                  <td class="px-5 py-3 text-slate-300">Commercial</td>
+                  <td class="px-5 py-3 text-slate-300">MIT</td>
+                </tr>
+                <tr>
+                  <td class="px-5 py-3">Pricing model</td>
+                  <td class="px-5 py-3 text-slate-300">Free</td>
+                  <td class="px-5 py-3 text-slate-300">Free OSS + design partner</td>
+                  <td class="px-5 py-3 text-slate-300">$9/dev + $59/CI + $39/DB</td>
+                  <td class="px-5 py-3 text-slate-300">$24-48/dev</td>
+                  <td class="px-5 py-3 text-slate-300">Free + €500 founder pilot</td>
                 </tr>
               </tbody>
             </table>
           </div>
           <p class="mt-6 text-xs text-slate-500">
-            Comparison reflects publicly available behaviour of common open
-            source migration linters and AI code review tools as of May 2026.
-            Open a PR if you spot something out of date.
+            Comparison reflects publicly stated features and pricing of each tool as of May 2026, sourced from their respective sites
+            (<a class="hover:text-white" href="https://squawkhq.com/" target="_blank" rel="noopener">squawkhq.com</a>,
+            <a class="hover:text-white" href="https://pgfence.com/" target="_blank" rel="noopener">pgfence.com</a>,
+            <a class="hover:text-white" href="https://atlasgo.io/pricing" target="_blank" rel="noopener">atlasgo.io/pricing</a>,
+            <a class="hover:text-white" href="https://www.coderabbit.ai/pricing" target="_blank" rel="noopener">coderabbit.ai/pricing</a>).
+            Spot something out of date? <a class="text-brake-400 hover:underline" href="https://github.com/mergebrake/mergebrake/issues/new" target="_blank" rel="noopener">Open a PR/issue</a>.
           </p>
         </div>
       </section>
