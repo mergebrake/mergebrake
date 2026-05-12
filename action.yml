@@ -1,5 +1,5 @@
 name: MergeBrake
-description: Stop dangerous DB migrations before they merge. Maps Prisma/Drizzle schema changes to impacted app code.
+description: Postgres migration safety check for Prisma and Drizzle PRs. Maps schema changes to app-code impact before merge.
 author: MergeBrake contributors
 branding:
   icon: shield

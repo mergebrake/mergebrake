@@ -1,24 +1,72 @@
 # MergeBrake
 
-> **Stops dangerous database migrations before they merge.**
-> Maps every `DROP COLUMN`, `RENAME`, or unsafe `NOT NULL` to the application
-> code it would break — across Prisma, Drizzle, and raw SQL.
+> **Stops dangerous Postgres migrations before they merge.**
+> Maps Prisma, Drizzle, and raw SQL schema changes to the application code they
+> can break.
 
-MergeBrake is a GitHub-native schema impact guard for Postgres apps using
-**Prisma** or **Drizzle**. It scans a pull request, detects destructive or
-downtime-prone database changes, follows the affected table and column names
-into application code, and tells reviewers whether the PR is **SAFE**, needs an
-**EXPAND / CONTRACT** rollout, or must be **BLOCKED**.
+MergeBrake scans pull requests, detects destructive or downtime-prone database
+changes, follows affected table and column names into application code, and
+posts one focused **SAFE / EXPAND_CONTRACT / BLOCK** review comment.
 
-The wedge is not "another migration linter". MergeBrake is built for the moment
-when Claude, Cursor, Codex, or another coding agent removes `users.full_name`
-from your Prisma schema (or your Drizzle `pgTable`) and the app still reads it
-through `fullName`, raw SQL, API serializers, or background jobs.
+Unlike SQL-only linters, MergeBrake also checks whether your app still reads the
+column you are dropping or renaming.
 
-```bash
-npx mergebrake scan "prisma/migrations/**/migration.sql" \
-  --commits ./.git/COMMIT_EDITMSG
+## Install in 60 seconds
+
+Drop one workflow file into your repository:
+
+```yaml
+# .github/workflows/mergebrake.yml
+name: MergeBrake
+on:
+  pull_request:
+    paths:
+      - 'prisma/**'
+      - 'drizzle/**'
+      - 'migrations/**'
+      - 'db/migrate/**'
+      - 'src/**'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  schema-impact:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: mergebrake/mergebrake@v0
+        with:
+          fail-on: BLOCK
 ```
+
+Pull request runs scan changed migration files by default, so the first install
+does not fail on years of historical migration debt. The action posts a sticky
+review comment, updates it on every push, and emits inline annotations only for
+medium+ findings.
+
+Full action reference lives in
+[`packages/github-action/README.md`](./packages/github-action/README.md).
+
+## What it catches
+
+- Destructive DDL: `DROP COLUMN`, `DROP TABLE`, `RENAME COLUMN`, `TRUNCATE`.
+- Downtime risks: unsafe `NOT NULL`, indexes without `CONCURRENTLY`, inline
+  foreign keys, primary keys, and unique constraints.
+- App-code references through Prisma `@map`, Drizzle aliases, and raw SQL.
+- PRs that contract schema and app code in the same deploy.
+- AI-generated PR signals from Claude, Cursor, Codex, Aider, and similar tools.
+
+## Privacy
+
+MergeBrake never connects to your database. It scans migration files and
+repository code inside your GitHub Actions runner, and it does not send source
+code, SQL, file paths, or report contents to MergeBrake.
+
+## Example PR result
 
 ```text
 MergeBrake - schema impact guard
@@ -42,23 +90,16 @@ AI-PR detected (scrutiny x3.00): Claude
     [contract]      Drop the column in a later migration.
 ```
 
-## See it in action
+The reproducible terminal demo is stored in
+[`assets/demo.tape`](./assets/demo.tape).
 
-<!--
-  The animated demo (assets/demo.gif) is generated locally via Charm VHS so it
-  stays reproducible. Run `vhs assets/demo.tape` from the repo root after
-  `npm run build`. Once `assets/demo.gif` is committed, GitHub can render it
-  inline here:
--->
-[Rebuild the 25-second terminal demo from `assets/demo.tape`](./assets/demo.tape).
+## Dogfood proof
 
-> 25 seconds: a PR drops `users.full_name`, MergeBrake flags it as BLOCK with
-> the exact lines of app code that still reach the column through Prisma's
-> `@map` alias, and prints the expand/contract recipe the reviewer can copy.
->
-> Don't see a GIF yet? It's rendered locally from
-> [`assets/demo.tape`](./assets/demo.tape) — see [`assets/README.md`](./assets/README.md)
-> for the one-liner that produces it.
+We ran MergeBrake against the full migration history of three popular
+Postgres/Prisma open-source projects: documenso, trigger.dev, and formbricks.
+Across **1,066 migrations**, the default ruleset surfaced **2,339 findings**.
+The case studies, including permalinks to the riskiest migrations, live in
+[`examples/dogfood/README.md`](./examples/dogfood/README.md).
 
 ## Why It Exists
 
@@ -89,7 +130,7 @@ MergeBrake connects those surfaces before merge.
 5. **Safe rollout recipes.** Findings include expand/contract steps reviewers
    can paste into the PR discussion.
 
-## Install
+## Local CLI
 
 ```bash
 npm install -g mergebrake
