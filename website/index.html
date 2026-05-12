@@ -973,6 +973,65 @@ npx mergebrake scan ... --fail-on BLOCK</pre>
         </div>
       </section>
 
+      <!-- GUIDES -->
+      <section class="border-t border-slate-800/60 bg-slate-950/40 py-20">
+        <div class="mx-auto max-w-6xl px-6">
+          <div class="max-w-3xl">
+            <div class="text-sm font-medium uppercase tracking-wider text-brake-400">
+              Migration safety guides
+            </div>
+            <h2 class="mt-3 text-3xl font-semibold tracking-tight md:text-4xl">
+              Practical rollout notes for Postgres + Prisma teams.
+            </h2>
+            <p class="mt-4 text-lg leading-relaxed text-slate-300">
+              Short reference pages for the migration patterns MergeBrake is
+              designed to catch before they reach main.
+            </p>
+          </div>
+          <div class="mt-10 grid gap-4 md:grid-cols-3">
+            <a
+              class="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 transition hover:border-brake-500/70 hover:bg-slate-900"
+              href="/prisma-drop-column-safe-rollout.html"
+            >
+              <div class="font-mono text-sm text-brake-400">DROP COLUMN</div>
+              <h3 class="mt-3 text-xl font-semibold text-white">
+                Safe Prisma drop-column rollout
+              </h3>
+              <p class="mt-3 text-sm leading-6 text-slate-400">
+                Expand/contract steps for dropping mapped Prisma fields without
+                breaking old app instances.
+              </p>
+            </a>
+            <a
+              class="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 transition hover:border-brake-500/70 hover:bg-slate-900"
+              href="/postgres-create-index-concurrently.html"
+            >
+              <div class="font-mono text-sm text-brake-400">CONCURRENTLY</div>
+              <h3 class="mt-3 text-xl font-semibold text-white">
+                Postgres CREATE INDEX safely
+              </h3>
+              <p class="mt-3 text-sm leading-6 text-slate-400">
+                Why non-concurrent indexes can block writes and how to flag them
+                in pull requests.
+              </p>
+            </a>
+            <a
+              class="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 transition hover:border-brake-500/70 hover:bg-slate-900"
+              href="/prisma-migration-linter.html"
+            >
+              <div class="font-mono text-sm text-brake-400">PR LINTER</div>
+              <h3 class="mt-3 text-xl font-semibold text-white">
+                Prisma migration linter
+              </h3>
+              <p class="mt-3 text-sm leading-6 text-slate-400">
+                A migration linter that maps schema changes to app-code impact,
+                not just SQL syntax.
+              </p>
+            </a>
+          </div>
+        </div>
+      </section>
+
       <!-- CTA -->
       <section class="border-t border-slate-800/60 py-24">
         <div class="mx-auto max-w-4xl px-6 text-center">

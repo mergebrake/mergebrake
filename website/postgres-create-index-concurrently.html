@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Postgres CREATE INDEX CONCURRENTLY in migrations — MergeBrake</title>
+    <meta
+      name="description"
+      content="Why Postgres CREATE INDEX without CONCURRENTLY can block writes, how to roll indexes out safely, and how to catch unsafe migrations in pull requests."
+    />
+    <link rel="canonical" href="https://mergebrake.dev/postgres-create-index-concurrently.html" />
+    <meta property="og:title" content="Postgres CREATE INDEX CONCURRENTLY in migrations" />
+    <meta property="og:description" content="Catch unsafe Postgres index migrations before merge and avoid blocking writes in production." />
+    <meta property="og:url" content="https://mergebrake.dev/postgres-create-index-concurrently.html" />
+    <meta property="og:image" content="https://mergebrake.dev/og.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ["InterVariable", "Inter", "ui-sans-serif", "system-ui", "sans-serif"],
+              mono: ["JetBrains Mono", "Fira Code", "ui-monospace", "SFMono-Regular", "Menlo", "monospace"],
+            },
+            colors: { brake: { 400: "#fb923c", 500: "#f97316" } },
+          },
+        },
+      };
+    </script>
+    <link rel="preconnect" href="https://rsms.me/" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://rsms.me/inter/inter.css" crossorigin="anonymous" />
+    <style>
+      :root { color-scheme: dark; }
+      body {
+        font-feature-settings: "cv02","cv03","cv04","cv11";
+        background:
+          radial-gradient(circle at 12% -10%, rgba(249,115,22,0.20), transparent 55%),
+          radial-gradient(circle at 90% 0%, rgba(56,189,248,0.16), transparent 50%),
+          #0b1020;
+      }
+      .grid-bg {
+        background-image:
+          linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+        background-size: 32px 32px;
+      }
+    </style>
+  </head>
+  <body class="text-slate-100 antialiased">
+    <header class="relative">
+      <div class="absolute inset-0 grid-bg opacity-30"></div>
+      <div class="relative mx-auto flex max-w-7xl items-center justify-between px-6 py-6">
+        <a href="/" class="flex items-center gap-2 font-semibold tracking-tight">
+          <svg viewBox="0 0 64 64" class="h-7 w-7" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <rect width="64" height="64" rx="14" fill="#0f172a" />
+            <path d="M14 38 H50 M14 30 H50 M32 14 L32 50" stroke="#f97316" stroke-width="5" stroke-linecap="round" />
+          </svg>
+          <span class="text-lg">MergeBrake</span>
+        </a>
+        <nav class="hidden gap-8 text-sm text-slate-300 md:flex">
+          <a class="hover:text-white" href="/#install">Install</a>
+          <a class="hover:text-white" href="/findings.html">Findings</a>
+          <a class="hover:text-white" href="https://github.com/mergebrake/mergebrake">GitHub</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="relative overflow-hidden border-t border-slate-800/60">
+        <div class="absolute inset-0 grid-bg opacity-30"></div>
+        <div class="relative mx-auto max-w-5xl px-6 py-20 md:py-24">
+          <div class="inline-flex items-center gap-2 rounded-full border border-slate-700 bg-slate-900/60 px-3 py-1 text-xs text-slate-300">
+            <span class="inline-block h-2 w-2 rounded-full bg-brake-500"></span>
+            Postgres migration guide
+          </div>
+          <h1 class="mt-6 max-w-4xl text-4xl font-semibold tracking-tight md:text-5xl">
+            Use <span class="font-mono text-brake-400">CREATE INDEX CONCURRENTLY</span> before production learns about locks.
+          </h1>
+          <p class="mt-6 max-w-3xl text-lg leading-relaxed text-slate-300">
+            A normal Postgres <code class="font-mono text-brake-400">CREATE INDEX</code>
+            can take locks that block writes on busy tables. In pull requests,
+            this often looks harmless because the SQL is short and ORM-generated.
+          </p>
+        </div>
+      </section>
+
+      <section class="border-t border-slate-800/60 py-16">
+        <div class="mx-auto grid max-w-6xl gap-10 px-6 lg:grid-cols-[1fr_0.9fr]">
+          <article class="prose prose-invert max-w-none prose-pre:bg-slate-950 prose-code:text-brake-300">
+            <h2>The unsafe migration</h2>
+            <pre><code>CREATE INDEX "orders_created_at_idx"
+  ON "orders" ("created_at");</code></pre>
+            <p>
+              On a small local database this finishes instantly. On a large
+              production table, the same migration may hold locks long enough to
+              turn a safe deploy into an incident.
+            </p>
+            <h2>The safer rollout</h2>
+            <pre><code>CREATE INDEX CONCURRENTLY "orders_created_at_idx"
+  ON "orders" ("created_at");</code></pre>
+            <p>
+              Concurrent index creation avoids the most disruptive lock pattern,
+              but it also means the migration cannot be wrapped the same way as a
+              normal transactional migration. Your deploy pipeline must support
+              that shape explicitly.
+            </p>
+            <h2>What MergeBrake checks</h2>
+            <ul>
+              <li>Flags <code>CREATE INDEX</code> without <code>CONCURRENTLY</code>.</li>
+              <li>Escalates non-concurrent unique indexes because they also enforce an app contract.</li>
+              <li>Demotes fresh-table indexes when the table is created in the same migration block.</li>
+              <li>Keeps low-value historical noise out of the main PR comment.</li>
+            </ul>
+          </article>
+          <aside class="rounded-2xl border border-slate-800 bg-slate-950/70 p-6">
+            <h2 class="text-lg font-semibold">PR check for unsafe indexes</h2>
+            <p class="mt-2 text-sm leading-6 text-slate-400">
+              MergeBrake parses Postgres migrations with libpg_query and posts a
+              focused review comment before the migration reaches main.
+            </p>
+            <pre class="mt-5 overflow-x-auto rounded-xl bg-slate-950 p-4 text-xs text-slate-300 ring-1 ring-slate-800"><code>- uses: mergebrake/mergebrake@v0
+  with:
+    fail-on: BLOCK</code></pre>
+            <a class="mt-5 inline-flex rounded-full bg-brake-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-brake-400" href="https://github.com/marketplace/actions/mergebrake">Open GitHub Marketplace</a>
+          </aside>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
