@@ -1,14 +1,15 @@
 {
   "repo": "documenso/documenso",
   "commit": "87315adb0f51619fdd2ef6b5963dcc54d78b3c6e",
-  "tool": "mergebrake@0.0.1",
+  "tool": "mergebrake@0.0.8",
   "scannedFiles": 157,
   "findings": 506,
   "verdict": "BLOCK",
-  "riskScore": 9250,
+  "riskScore": 6930,
   "bySeverity": {
-    "high": 275,
-    "medium": 132,
+    "info": 119,
+    "high": 161,
+    "medium": 127,
     "low": 48,
     "critical": 51
   },
@@ -34,7 +35,7 @@
   "topRiskiest": [
     {
       "file": "packages/prisma/migrations/20250522054050_add_organisations/migration.sql",
-      "score": 2019,
+      "score": 1619,
       "findings": 101,
       "rules": [
         "destructive/drop-column",
@@ -51,7 +52,7 @@
     },
     {
       "file": "packages/prisma/migrations/20250918070645_add_envelopes/migration.sql",
-      "score": 1428,
+      "score": 1248,
       "findings": 63,
       "rules": [
         "destructive/drop-column",
@@ -61,17 +62,6 @@
         "locking/add-foreign-key-without-not-valid",
         "locking/create-index-non-concurrent",
         "locking/set-not-null"
-      ]
-    },
-    {
-      "file": "packages/prisma/migrations/20240205040421_add_teams/migration.sql",
-      "score": 496,
-      "findings": 26,
-      "rules": [
-        "locking/add-check-without-not-valid",
-        "locking/add-foreign-key-without-not-valid",
-        "locking/create-index-non-concurrent",
-        "safety/drop-not-null"
       ]
     },
     {
@@ -103,27 +93,6 @@
       ]
     },
     {
-      "file": "packages/prisma/migrations/20230404095503_initial_migration/migration.sql",
-      "score": 240,
-      "findings": 12,
-      "rules": [
-        "locking/add-foreign-key-without-not-valid",
-        "locking/create-index-non-concurrent"
-      ]
-    },
-    {
-      "file": "packages/prisma/migrations/20231221101005_add_templates/migration.sql",
-      "score": 208,
-      "findings": 14,
-      "rules": [
-        "destructive/drop-constraint",
-        "locking/add-check-without-not-valid",
-        "locking/add-foreign-key-without-not-valid",
-        "locking/create-index-non-concurrent",
-        "safety/drop-not-null"
-      ]
-    },
-    {
       "file": "packages/prisma/migrations/20250324135010_model_folder_update_id_type_and_add_pinned_property/migration.sql",
       "score": 183,
       "findings": 10,
@@ -136,8 +105,29 @@
       ]
     },
     {
+      "file": "packages/prisma/migrations/20240424072655_update_foreign_key_constraints/migration.sql",
+      "score": 160,
+      "findings": 8,
+      "rules": [
+        "destructive/drop-constraint",
+        "locking/add-foreign-key-without-not-valid"
+      ]
+    },
+    {
+      "file": "packages/prisma/migrations/20231221101005_add_templates/migration.sql",
+      "score": 148,
+      "findings": 14,
+      "rules": [
+        "destructive/drop-constraint",
+        "locking/add-check-without-not-valid",
+        "locking/add-foreign-key-without-not-valid",
+        "locking/create-index-non-concurrent",
+        "safety/drop-not-null"
+      ]
+    },
+    {
       "file": "packages/prisma/migrations/20240606060033_add_public_profiles/migration.sql",
-      "score": 180,
+      "score": 140,
       "findings": 9,
       "rules": [
         "destructive/drop-constraint",
@@ -149,11 +139,25 @@
       ]
     },
     {
-      "file": "packages/prisma/migrations/20250710050651_add_email_domains/migration.sql",
-      "score": 168,
-      "findings": 9,
+      "file": "packages/prisma/migrations/20230912011344_reverse_document_data_relation/migration.sql",
+      "score": 126,
+      "findings": 6,
       "rules": [
+        "destructive/drop-column",
+        "destructive/drop-constraint",
+        "destructive/drop-index",
         "locking/add-foreign-key-without-not-valid",
+        "locking/create-index-non-concurrent",
+        "locking/set-not-null"
+      ]
+    },
+    {
+      "file": "packages/prisma/migrations/20231206073509_add_multple_subscriptions/migration.sql",
+      "score": 122,
+      "findings": 7,
+      "rules": [
+        "destructive/drop-column",
+        "destructive/drop-index",
         "locking/create-index-non-concurrent",
         "locking/set-not-null"
       ]

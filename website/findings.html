@@ -106,19 +106,19 @@
       <!-- AGGREGATES -->
       <section class="border-t border-slate-800/60 bg-slate-950/40 py-16">
         <div class="mx-auto max-w-6xl px-6">
-          <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
             <div class="rounded-2xl border border-rose-500/30 bg-rose-500/5 p-6">
               <div class="text-4xl font-semibold text-rose-300">360</div>
               <div class="mt-1 text-sm uppercase tracking-wider text-rose-200/70">Critical</div>
               <div class="mt-2 text-xs text-slate-400">Data loss or table-wide downtime risk.</div>
             </div>
             <div class="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-6">
-              <div class="text-4xl font-semibold text-amber-300">1,434</div>
+              <div class="text-4xl font-semibold text-amber-300">760</div>
               <div class="mt-1 text-sm uppercase tracking-wider text-amber-200/70">High</div>
               <div class="mt-2 text-xs text-slate-400">App-level breakage or long blocking locks.</div>
             </div>
             <div class="rounded-2xl border border-sky-500/30 bg-sky-500/5 p-6">
-              <div class="text-4xl font-semibold text-sky-300">388</div>
+              <div class="text-4xl font-semibold text-sky-300">319</div>
               <div class="mt-1 text-sm uppercase tracking-wider text-sky-200/70">Medium</div>
               <div class="mt-2 text-xs text-slate-400">Query-plan regression or contract relaxation.</div>
             </div>
@@ -127,7 +127,15 @@
               <div class="mt-1 text-sm uppercase tracking-wider text-slate-400">Low</div>
               <div class="mt-2 text-xs text-slate-400">Style or convention issues worth flagging.</div>
             </div>
+            <div class="rounded-2xl border border-slate-700/40 bg-slate-900/20 p-6">
+              <div class="text-4xl font-semibold text-slate-400">743</div>
+              <div class="mt-1 text-sm uppercase tracking-wider text-slate-500">Info</div>
+              <div class="mt-2 text-xs text-slate-500">Fresh-table locks: educational, no real risk on empty tables.</div>
+            </div>
           </div>
+          <p class="mt-6 text-center text-xs text-slate-500">
+            MergeBrake v0.0.8 introduced fresh-table demotion: 743 locking findings (mostly initial-migration <code class="text-brake-300">CREATE INDEX</code> / <code class="text-brake-300">ADD FK</code>) shifted from <code class="text-brake-300">high</code>/<code class="text-brake-300">medium</code> to <code class="text-brake-300">info</code> once we detected they target tables created in the same migration block.
+          </p>
         </div>
       </section>
 
@@ -338,9 +346,9 @@
               </div>
               <div class="mt-2 flex items-baseline gap-3">
                 <div class="text-2xl font-semibold text-rose-300">381</div>
-                <div class="text-xs uppercase tracking-wider text-slate-400">findings · risk 5,530 · 🔴 BLOCK</div>
+                <div class="text-xs uppercase tracking-wider text-slate-400">findings · risk 1,574 · 🔴 BLOCK</div>
               </div>
-              <p class="mt-2 text-sm text-slate-400">Document sharing platform. 3 critical DROP COLUMN + 198 high-severity locking patterns.</p>
+              <p class="mt-2 text-sm text-slate-400">Document sharing platform. 3 critical DROP COLUMN findings + 43 high-severity locks on existing tables.</p>
             </a>
             <a class="group rounded-2xl border border-slate-800/60 bg-slate-900/40 p-5 transition hover:border-brake-500/60"
                href="https://gist.github.com/IbraChar03/c4a0098ff48d26046a5175055c52e41c" target="_blank" rel="noopener">
@@ -350,9 +358,9 @@
               </div>
               <div class="mt-2 flex items-baseline gap-3">
                 <div class="text-2xl font-semibold text-rose-300">384</div>
-                <div class="text-xs uppercase tracking-wider text-slate-400">findings · risk 5,125 · 🔴 BLOCK</div>
+                <div class="text-xs uppercase tracking-wider text-slate-400">findings · risk 1,529 · 🔴 BLOCK</div>
               </div>
-              <p class="mt-2 text-sm text-slate-400">Open-source CRM. 13 critical changes + heavy non-concurrent index usage.</p>
+              <p class="mt-2 text-sm text-slate-400">Open-source CRM. 13 critical changes, mostly DROP COLUMN/TABLE on the customer-data layer.</p>
             </a>
             <a class="group rounded-2xl border border-slate-800/60 bg-slate-900/40 p-5 transition hover:border-brake-500/60"
                href="https://gist.github.com/IbraChar03/629f2ccc8c4c754f2392831e2bd8708f" target="_blank" rel="noopener">
@@ -362,9 +370,9 @@
               </div>
               <div class="mt-2 flex items-baseline gap-3">
                 <div class="text-2xl font-semibold text-rose-300">186</div>
-                <div class="text-xs uppercase tracking-wider text-slate-400">findings · risk 2,715 · 🔴 BLOCK</div>
+                <div class="text-xs uppercase tracking-wider text-slate-400">findings · risk 2,215 · 🔴 BLOCK</div>
               </div>
-              <p class="mt-2 text-sm text-slate-400">Wealth management. 8 critical + enum rename patterns that silently break consumers.</p>
+              <p class="mt-2 text-sm text-slate-400">Wealth management. 8 critical + many enum-add findings — silent app-code break risk for old replicas.</p>
             </a>
             <a class="group rounded-2xl border border-slate-800/60 bg-slate-900/40 p-5 transition hover:border-brake-500/60"
                href="https://gist.github.com/IbraChar03/081f68f2673332cbaad30d6730bfee36" target="_blank" rel="noopener">
@@ -374,28 +382,26 @@
               </div>
               <div class="mt-2 flex items-baseline gap-3">
                 <div class="text-2xl font-semibold text-rose-300">153</div>
-                <div class="text-xs uppercase tracking-wider text-slate-400">findings · risk 2,575 · 🔴 BLOCK</div>
+                <div class="text-xs uppercase tracking-wider text-slate-400">findings · risk 1,631 · 🔴 BLOCK</div>
               </div>
-              <p class="mt-2 text-sm text-slate-400">Personal finance, Drizzle ORM. 10 critical + repeated DROP INDEX without CONCURRENTLY.</p>
+              <p class="mt-2 text-sm text-slate-400">Personal finance, Drizzle ORM. 10 critical + repeated DROP INDEX/CONSTRAINT iterations.</p>
             </a>
-            <a class="group rounded-2xl border border-slate-800/60 bg-slate-900/40 p-5 transition hover:border-brake-500/60 md:col-span-2"
+            <a class="group rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-5 transition hover:border-emerald-400/60 md:col-span-2"
                href="https://gist.github.com/IbraChar03/8d6e47372a1ec4e26a0affb8b62bd9f6" target="_blank" rel="noopener">
               <div class="flex items-baseline justify-between">
-                <div class="font-semibold text-white group-hover:text-brake-400">jellydn/next-app-starter</div>
+                <div class="font-semibold text-white group-hover:text-emerald-300">jellydn/next-app-starter</div>
                 <span class="text-xs text-slate-500">prisma · ★281</span>
               </div>
               <div class="mt-2 flex items-baseline gap-3">
-                <div class="text-2xl font-semibold text-rose-300">8</div>
-                <div class="text-xs uppercase tracking-wider text-slate-400">findings · risk 143 · 🔴 BLOCK</div>
+                <div class="text-2xl font-semibold text-emerald-300">3</div>
+                <div class="text-xs uppercase tracking-wider text-emerald-200/70">risk score · 🟢 SAFE</div>
               </div>
-              <p class="mt-2 text-sm text-slate-400">Next.js + Prisma starter template. Out-of-the-box <code class="text-brake-300">prisma migrate dev</code> output produces 5 high-severity locking warnings — same patterns inherited by every project bootstrapped from it.</p>
+              <p class="mt-2 text-sm text-slate-300">Next.js + Prisma starter template. After the v0.0.8 fresh-table demotion, the initial-migration locking warnings collapse to <code class="text-emerald-300">info</code> — the starter's stock <code class="text-emerald-300">prisma migrate dev</code> output is correctly marked SAFE. <strong class="text-white">This is the calibration case</strong>: any project bootstrapped from it inherits the same clean baseline.</p>
             </a>
           </div>
 
           <p class="mt-6 text-sm text-slate-500">
-            None of these projects are doing migrations wrong; they ship at the
-            speed real teams ship. The findings are the kind of rollout-risk
-            comments MergeBrake would post inline on PRs touching the migrations folder.
+            Numbers above reflect MergeBrake <code class="text-brake-300">v0.0.8</code>: locking patterns on tables created in the same migration block (e.g. the initial setup) are demoted to <code class="text-brake-300">info</code>, since the SHARE lock can't contend with anything on an empty table. Critical DROP COLUMN / DROP TABLE findings stay at their full severity. None of these projects are doing migrations wrong; the findings are the kind of rollout-risk comments MergeBrake would post inline on real PRs.
           </p>
         </div>
       </section>
@@ -418,7 +424,7 @@
             <article class="rounded-2xl border border-rose-500/30 bg-slate-900/40 p-7">
               <div class="flex flex-wrap items-baseline justify-between gap-3">
                 <div>
-                  <div class="text-xs uppercase tracking-wider text-rose-300">Risk score 4,426 · 268 findings</div>
+                  <div class="text-xs uppercase tracking-wider text-rose-300">Risk score 3,986 · 268 findings</div>
                   <h3 class="mt-1 text-xl font-semibold text-white">trigger.dev — <span class="text-brake-400">schema redesign for new system</span></h3>
                 </div>
                 <a class="text-sm text-brake-400 hover:underline"
@@ -451,7 +457,7 @@
             <article class="rounded-2xl border border-rose-500/30 bg-slate-900/40 p-7">
               <div class="flex flex-wrap items-baseline justify-between gap-3">
                 <div>
-                  <div class="text-xs uppercase tracking-wider text-rose-300">Risk score 2,019 · 101 findings</div>
+                  <div class="text-xs uppercase tracking-wider text-rose-300">Risk score 1,619 · 101 findings</div>
                   <h3 class="mt-1 text-xl font-semibold text-white">documenso — <span class="text-brake-400">add organisations</span></h3>
                 </div>
                 <a class="text-sm text-brake-400 hover:underline"
@@ -485,7 +491,7 @@
             <article class="rounded-2xl border border-rose-500/30 bg-slate-900/40 p-7">
               <div class="flex flex-wrap items-baseline justify-between gap-3">
                 <div>
-                  <div class="text-xs uppercase tracking-wider text-rose-300">Risk score 1,300+ · contract-without-expand</div>
+                  <div class="text-xs uppercase tracking-wider text-rose-300">Risk score 851 · 23 findings</div>
                   <h3 class="mt-1 text-xl font-semibold text-white">formbricks — <span class="text-brake-400">remove deprecated fields and tables</span></h3>
                 </div>
                 <a class="text-sm text-brake-400 hover:underline"

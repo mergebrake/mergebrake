@@ -16,3 +16,4 @@ coverage/
 .turbo/
 .cache/
 image*.png
+discovery-targets*.md

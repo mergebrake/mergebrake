@@ -1,15 +1,16 @@
 {
   "repo": "triggerdotdev/trigger.dev",
   "commit": "a5ba4065305e9e4f7bd97f04b763ff1ff8f1b9bb",
-  "tool": "mergebrake@0.0.1",
+  "tool": "mergebrake@0.0.8",
   "scannedFiles": 768,
   "findings": 1519,
   "verdict": "BLOCK",
-  "riskScore": 34954,
+  "riskScore": 25070,
   "bySeverity": {
-    "high": 998,
+    "high": 523,
     "low": 86,
-    "medium": 167,
+    "info": 523,
+    "medium": 119,
     "critical": 268
   },
   "byRule": {
@@ -32,7 +33,7 @@
   "topRiskiest": [
     {
       "file": "internal-packages/database/prisma/migrations/20230512085413_schema_redesign_for_new_system/migration.sql",
-      "score": 4426,
+      "score": 3986,
       "findings": 155,
       "rules": [
         "destructive/drop-column",
@@ -45,8 +46,16 @@
       ]
     },
     {
+      "file": "internal-packages/database/prisma/migrations/20250526092407_remove_v2_tables_round_1/migration.sql",
+      "score": 1000,
+      "findings": 20,
+      "rules": [
+        "destructive/drop-table"
+      ]
+    },
+    {
       "file": "internal-packages/database/prisma/migrations/20230615152126_revamp_integration_schema/migration.sql",
-      "score": 1121,
+      "score": 833,
       "findings": 44,
       "rules": [
         "destructive/drop-column",
@@ -59,16 +68,8 @@
       ]
     },
     {
-      "file": "internal-packages/database/prisma/migrations/20250526092407_remove_v2_tables_round_1/migration.sql",
-      "score": 1000,
-      "findings": 20,
-      "rules": [
-        "destructive/drop-table"
-      ]
-    },
-    {
       "file": "internal-packages/database/prisma/migrations/20230426150713_add_support_for_projects/migration.sql",
-      "score": 836,
+      "score": 636,
       "findings": 40,
       "rules": [
         "destructive/drop-column",
@@ -81,31 +82,8 @@
       ]
     },
     {
-      "file": "internal-packages/database/prisma/migrations/20250103152909_add_run_engine_v2/migration.sql",
-      "score": 715,
-      "findings": 39,
-      "rules": [
-        "locking/add-foreign-key-without-not-valid",
-        "locking/create-index-non-concurrent",
-        "safety/create-table-without-primary-key"
-      ]
-    },
-    {
-      "file": "internal-packages/database/prisma/migrations/20240123193905_restructure_task_runs_with_attempts/migration.sql",
-      "score": 709,
-      "findings": 24,
-      "rules": [
-        "destructive/drop-column",
-        "destructive/drop-constraint",
-        "destructive/drop-index",
-        "locking/add-foreign-key-without-not-valid",
-        "locking/create-index-non-concurrent",
-        "safety/create-table-without-primary-key"
-      ]
-    },
-    {
       "file": "internal-packages/database/prisma/migrations/20230515151445_add_trigger_sources/migration.sql",
-      "score": 686,
+      "score": 526,
       "findings": 25,
       "rules": [
         "destructive/drop-column",
@@ -118,8 +96,21 @@
       ]
     },
     {
+      "file": "internal-packages/database/prisma/migrations/20240123193905_restructure_task_runs_with_attempts/migration.sql",
+      "score": 521,
+      "findings": 24,
+      "rules": [
+        "destructive/drop-column",
+        "destructive/drop-constraint",
+        "destructive/drop-index",
+        "locking/add-foreign-key-without-not-valid",
+        "locking/create-index-non-concurrent",
+        "safety/create-table-without-primary-key"
+      ]
+    },
+    {
       "file": "internal-packages/database/prisma/migrations/20221223132913_more_pub_sub_refactoring/migration.sql",
-      "score": 530,
+      "score": 490,
       "findings": 16,
       "rules": [
         "destructive/drop-column",
@@ -131,7 +122,7 @@
     },
     {
       "file": "internal-packages/database/prisma/migrations/20221222153652_refactor_schema_generic_pub_sub_model/migration.sql",
-      "score": 480,
+      "score": 460,
       "findings": 18,
       "rules": [
         "destructive/drop-column",
@@ -142,14 +133,27 @@
       ]
     },
     {
-      "file": "internal-packages/database/prisma/migrations/20230428092422_rename_api_connection_models/migration.sql",
-      "score": 420,
-      "findings": 18,
+      "file": "internal-packages/database/prisma/migrations/20230329123037_simplified_job_models/migration.sql",
+      "score": 378,
+      "findings": 15,
       "rules": [
+        "destructive/drop-column",
         "destructive/drop-constraint",
+        "destructive/drop-index",
         "destructive/drop-table",
         "locking/add-foreign-key-without-not-valid",
+        "locking/add-not-null-without-default",
         "locking/create-index-non-concurrent"
+      ]
+    },
+    {
+      "file": "internal-packages/database/prisma/migrations/20240208124114_changes_to_the_task_event_schema/migration.sql",
+      "score": 378,
+      "findings": 9,
+      "rules": [
+        "destructive/drop-column",
+        "locking/add-not-null-without-default",
+        "safety/drop-not-null"
       ]
     }
   ]

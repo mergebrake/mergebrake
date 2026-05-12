@@ -12,18 +12,22 @@ default ruleset.
 
 | Repo | License | Commit | Migrations scanned | Findings | Verdict |
 |---|---|---|---|---|---|
-| [documenso/documenso](https://github.com/documenso/documenso) | AGPL-3.0 | `87315adb` | 157 | **506** | 🔴 BLOCK · risk **9,250** |
-| [triggerdotdev/trigger.dev](https://github.com/triggerdotdev/trigger.dev) | Apache-2.0 | `a5ba4065` | 768 | **1,519** | 🔴 BLOCK · risk **34,954** |
-| [formbricks/formbricks](https://github.com/formbricks/formbricks) | AGPL-3.0 | `cad10b88` | 141 | **314** | 🔴 BLOCK · risk **6,051** |
+| [documenso/documenso](https://github.com/documenso/documenso) | AGPL-3.0 | `87315adb` | 157 | **506** | 🔴 BLOCK · risk **6,930** |
+| [triggerdotdev/trigger.dev](https://github.com/triggerdotdev/trigger.dev) | Apache-2.0 | `a5ba4065` | 768 | **1,519** | 🔴 BLOCK · risk **25,070** |
+| [formbricks/formbricks](https://github.com/formbricks/formbricks) | AGPL-3.0 | `cad10b88` | 141 | **314** | 🔴 BLOCK · risk **4,223** |
 | **Total** |  |  | **1,066** | **2,339** |  |
 
-The headline number grew from **1,883** (v0.0.1) to **2,339** (current main)
-after the v0.0.2 rule pack added six new patterns. The biggest contributors:
-**`destructive/drop-constraint`** (258 new findings across the three repos —
-Prisma loves `DROP FOREIGN KEY ALTER TABLE DROP CONSTRAINT` whenever a schema
-relationship gets reshaped), **`destructive/drop-index`** (98 findings), and
-**`safety/drop-not-null`** (53 findings). None of these are exotic patterns —
-they are everyday refactors that quietly break read paths in production.
+The headline count is unchanged across versions — 2,339 findings on 1,066
+migrations — but the aggregate **risk score** dropped from ~50,200 (v0.0.7)
+to **36,223** (v0.0.8) after the fresh-table demotion rule kicked in. 743 of
+the findings are locking patterns on tables created in the same migration
+block (initial-migration noise); v0.0.8 demotes those to severity `info`
+(weight 0 in the risk score) so reviewers see the educational signal without
+the false-alarm risk score on day-1 schema bootstrap.
+
+Critical-severity findings — DROP COLUMN, DROP TABLE, TRUNCATE — are
+unchanged: 360 across the three repos, every one of them on a table that
+already existed before the PR. Those are the ones a reviewer wants to see.
 
 The three repos are all healthy, popular open-source products. The findings
 aren't "bugs in their migrations" — most of them are choices that work because
