@@ -110,6 +110,69 @@ describe("AST rule engine — Postgres dialect", () => {
     });
   });
 
+  describe("fresh-table demotion (initial-migration noise)", () => {
+    it("demotes CREATE INDEX to info when the table is created in the same block", async () => {
+      const findings = await scan(
+        `CREATE TABLE "Account" ("id" text PRIMARY KEY, "providerId" text NOT NULL);\n` +
+          `CREATE UNIQUE INDEX "Account_providerId_key" ON "Account"("providerId");`,
+      );
+      const f = findings.find(
+        (x) => x.ruleId === "locking/create-index-non-concurrent",
+      );
+      expect(f).toBeDefined();
+      expect(f!.severity).toBe("info");
+      expect(f!.title).toMatch(/fresh table/i);
+    });
+
+    it("still flags CREATE INDEX as high/medium on a pre-existing table", async () => {
+      const findings = await scan(
+        `CREATE UNIQUE INDEX "Account_providerId_key" ON "Account"("providerId");`,
+      );
+      const f = findings.find(
+        (x) => x.ruleId === "locking/create-index-non-concurrent",
+      );
+      expect(f).toBeDefined();
+      expect(f!.severity).toBe("high");
+    });
+
+    it("demotes ADD FK to info when the constrained table is freshly created", async () => {
+      const findings = await scan(
+        `CREATE TABLE "Account" ("id" text PRIMARY KEY, "userId" text NOT NULL);\n` +
+          `ALTER TABLE "Account" ADD CONSTRAINT "Account_userId_fkey" ` +
+          `FOREIGN KEY ("userId") REFERENCES "User"("id");`,
+      );
+      const f = findings.find(
+        (x) => x.ruleId === "locking/add-foreign-key-without-not-valid",
+      );
+      expect(f).toBeDefined();
+      expect(f!.severity).toBe("info");
+    });
+
+    it("still flags ADD FK as high on a pre-existing table", async () => {
+      const findings = await scan(
+        `ALTER TABLE "orders" ADD CONSTRAINT "fk_user" ` +
+          `FOREIGN KEY ("user_id") REFERENCES "users"("id");`,
+      );
+      const f = findings.find(
+        (x) => x.ruleId === "locking/add-foreign-key-without-not-valid",
+      );
+      expect(f).toBeDefined();
+      expect(f!.severity).toBe("high");
+    });
+
+    it("handles schema-qualified CREATE TABLE", async () => {
+      const findings = await scan(
+        `CREATE TABLE "public"."Session" ("id" text PRIMARY KEY);\n` +
+          `CREATE UNIQUE INDEX "Session_id_key" ON "Session"("id");`,
+      );
+      const f = findings.find(
+        (x) => x.ruleId === "locking/create-index-non-concurrent",
+      );
+      expect(f).toBeDefined();
+      expect(f!.severity).toBe("info");
+    });
+  });
+
   describe("locking/alter-column-type", () => {
     it("flags type changes", async () => {
       const findings = await scan(

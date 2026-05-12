@@ -1,5 +1,5 @@
 import type { AstRule } from "./index.js";
-import { makeFinding } from "./_shared.js";
+import { makeFinding, isTableFreshInBlock } from "./_shared.js";
 import {
   isAlterTable,
   relationName,
@@ -12,6 +12,11 @@ import {
  * On any non-trivial table this is minutes of blocking writes. The standard
  * Postgres advice is to add the constraint NOT VALID first, then VALIDATE it
  * separately (which only requires a SHARE UPDATE EXCLUSIVE lock).
+ *
+ * Exception: when the target table is being CREATEd in the same migration
+ * block, the validation cost is zero (empty table). We demote the finding
+ * to `info` in that case so initial-migration runs don't drown reviewers
+ * in theoretical lock warnings.
  */
 export const astAddForeignKeyWithoutNotValid: AstRule = {
   id: "locking/add-foreign-key-without-not-valid",
@@ -19,6 +24,7 @@ export const astAddForeignKeyWithoutNotValid: AstRule = {
     if (!isAlterTable(ctx.statement)) return [];
     const findings = [];
     const table = relationName(ctx.statement.node.relation);
+    const fresh = isTableFreshInBlock(ctx.block, table);
     for (const c of ctx.statement.node.cmds ?? []) {
       const cmd = c.AlterTableCmd;
       if (cmd?.subtype !== "AT_AddConstraint") continue;
@@ -29,17 +35,22 @@ export const astAddForeignKeyWithoutNotValid: AstRule = {
 
       const conname = constraint.conname ?? "<unnamed>";
       const refTable = constraint.pktable?.relname ?? "<ref_table>";
+      const severity = fresh ? "info" : "high";
+      const titleSuffix = fresh ? " (fresh table — empty validation)" : "";
+      const messageExtra = fresh
+        ? `\n\nTable \`${table}\` is created in this same migration, so the validation scan runs over zero rows. The lock-cost concern only applies when this rule fires on a pre-existing table.`
+        : "";
       findings.push(
         makeFinding(ctx, {
           ruleId: "locking/add-foreign-key-without-not-valid",
-          severity: "high",
-          title: `ADD FOREIGN KEY ${conname} on ${table} blocks writes during validation`,
+          severity,
+          title: `ADD FOREIGN KEY ${conname} on ${table} blocks writes during validation${titleSuffix}`,
           message:
             `Adding a foreign key without \`NOT VALID\` forces Postgres to scan and lock every row in \`${table}\` ` +
             `to verify the new constraint against \`${refTable}\` before the migration returns. ` +
             `That can mean minutes of write-blocking on a large table. Split into two statements: ` +
             `add the FK as \`NOT VALID\` (immediate, only future rows are checked), then \`VALIDATE CONSTRAINT\` ` +
-            `online afterward.`,
+            `online afterward.` + messageExtra,
           affectedSymbols: [conname, table, refTable],
           recipe: {
             summary: `Two-step add: NOT VALID first, then VALIDATE.`,
