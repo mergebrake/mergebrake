@@ -1,6 +1,6 @@
 {
   "name": "mergebrake-core",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "MergeBrake core engine: schema-change risk rules, app-code impact mapping, AI-PR signals, and rollout guidance.",
   "type": "module",
   "main": "./dist/index.js",
@@ -20,7 +20,7 @@
     "test": "cd ../.. && vitest run"
   },
   "dependencies": {
-    "mergebrake-shared": "0.0.9",
+    "mergebrake-shared": "0.0.10",
     "fast-glob": "^3.3.2",
     "libpg-query": "^17.7.3",
     "yaml": "^2.9.0"
