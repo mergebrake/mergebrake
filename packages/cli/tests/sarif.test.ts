@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { renderSarif } from "../src/sarif.js";
+import { MERGEBRAKE_VERSION } from "../src/version.js";
 import type { AnalysisReport } from "mergebrake-shared";
 
 const baseReport: AnalysisReport = {
@@ -49,7 +50,7 @@ describe("renderSarif", () => {
   it("emits SARIF 2.1.0 envelope", () => {
     expect(json.version).toBe("2.1.0");
     expect(json.$schema).toContain("sarif-schema-2.1.0");
-    expect(json.runs[0].tool.driver.version).toBe("0.0.10");
+    expect(json.runs[0].tool.driver.version).toBe(MERGEBRAKE_VERSION);
     expect(json.runs).toHaveLength(1);
   });
 
