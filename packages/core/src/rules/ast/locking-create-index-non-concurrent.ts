@@ -19,7 +19,7 @@ export const astCreateIndexNonConcurrent: AstRule = {
     // block can't block anything: the table has no rows yet, no writers. Demote
     // to info so the finding stays visible (educational) but stops dominating
     // the risk score on initial-migration runs.
-    const fresh = isTableFreshInBlock(ctx.block, table);
+    const fresh = isTableFreshInBlock(ctx, table);
     const severity = fresh ? "info" : unique ? "high" : "medium";
     const titleSuffix = fresh ? " (fresh table — no real lock risk)" : "";
     const messageExtra = fresh

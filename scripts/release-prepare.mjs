@@ -44,6 +44,7 @@ const PACKAGE_FILES = [
   "package.json",
   ...PUBLIC_PACKAGES.map((p) => path.join(p, "package.json")),
 ];
+const VERSION_SOURCE_FILES = ["packages/cli/src/version.ts"];
 const WORKSPACE_DEPS = ["mergebrake-shared", "mergebrake-core"];
 
 const summary = [];
@@ -92,6 +93,25 @@ if (summary.length) {
   for (const line of summary) console.log(line);
 }
 
+for (const rel of VERSION_SOURCE_FILES) {
+  const abs = path.join(repoRoot, rel);
+  const before = await fs.readFile(abs, "utf-8");
+  const after = before.replace(
+    /MERGEBRAKE_VERSION\s*=\s*["'][^"']+["']/,
+    `MERGEBRAKE_VERSION = "${version}"`,
+  );
+  if (after !== before) {
+    if (dryRun) {
+      console.log(`would update ${rel}`);
+    } else {
+      await fs.writeFile(abs, after);
+      console.log(`updated  ${rel}`);
+    }
+  } else {
+    console.log(`unchanged ${rel}`);
+  }
+}
+
 if (!dryRun) {
   console.log("\nUpdating package-lock.json...");
   run("npm install --package-lock-only --ignore-scripts");
@@ -123,7 +143,7 @@ if (!status.trim()) {
 }
 
 console.log("\nCommitting and tagging…");
-run("git add package.json packages/shared/package.json packages/core/package.json packages/cli/package.json package-lock.json");
+run("git add package.json packages/shared/package.json packages/core/package.json packages/cli/package.json packages/cli/src/version.ts package-lock.json");
 run(`git commit -m "chore(release): v${version}"`);
 run(`git tag -a v${version} -m "v${version}"`);
 

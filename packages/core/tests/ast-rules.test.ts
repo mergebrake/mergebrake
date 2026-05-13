@@ -171,6 +171,18 @@ describe("AST rule engine — Postgres dialect", () => {
       expect(f).toBeDefined();
       expect(f!.severity).toBe("info");
     });
+
+    it("does not demote when CREATE TABLE appears only in a comment", async () => {
+      const findings = await scan(
+        `-- CREATE TABLE "Account" ("id" text PRIMARY KEY);\n` +
+          `CREATE UNIQUE INDEX "Account_providerId_key" ON "Account"("providerId");`,
+      );
+      const f = findings.find(
+        (x) => x.ruleId === "locking/create-index-non-concurrent",
+      );
+      expect(f).toBeDefined();
+      expect(f!.severity).toBe("high");
+    });
   });
 
   describe("locking/alter-column-type", () => {

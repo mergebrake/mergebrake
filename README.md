@@ -364,9 +364,12 @@ to a regex linter that covers the destructive family.
 ## Positioning
 
 Existing tools such as MigrationPilot, Atlas, pgfence, Squawk,
-strong_migrations, Flyway, and Liquibase are useful. MergeBrake's focus is
-narrower: PR-time schema impact for GitHub teams using Postgres, Prisma,
-Drizzle, raw SQL, and AI coding agents.
+strong_migrations, Flyway, and Liquibase are useful. Some of them have deeper
+Postgres lock matrices, broader governance workflows, or more SQL rules.
+MergeBrake's focus is narrower: PR-time schema impact for GitHub teams using
+Postgres, Prisma, Drizzle, raw SQL, and AI coding agents. The differentiator is
+mapping a risky migration to the app-code references and deploy-order contract
+it can break.
 
 ## What MergeBrake Is Not
 

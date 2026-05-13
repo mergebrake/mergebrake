@@ -57,4 +57,59 @@ const query = "SELECT full_name FROM users";
       "full_name inside a block comment should not count",
     );
   });
+
+  it("scans monorepo app and package source directories by default", async () => {
+    const repoRoot = await mkdtemp(path.join(os.tmpdir(), "mergebrake-monorepo-"));
+    await mkdir(path.join(repoRoot, "apps", "web", "src"), {
+      recursive: true,
+    });
+    await mkdir(path.join(repoRoot, "packages", "api", "src"), {
+      recursive: true,
+    });
+    await mkdir(path.join(repoRoot, "packages", "api", "dist"), {
+      recursive: true,
+    });
+    await writeFile(
+      path.join(repoRoot, "apps", "web", "src", "profile.ts"),
+      `const display = user.fullName;\n`,
+    );
+    await writeFile(
+      path.join(repoRoot, "packages", "api", "src", "users.sql"),
+      `SELECT full_name FROM users;\n`,
+    );
+    await writeFile(
+      path.join(repoRoot, "packages", "api", "dist", "users.js"),
+      `const stale = user.fullName;\n`,
+    );
+
+    const refs = await findCrossReferences({
+      repoRoot,
+      symbols: ["full_name", "fullName"],
+    });
+
+    expect(refs.map((ref) => ref.file).sort()).toEqual([
+      "apps/web/src/profile.ts",
+      "packages/api/src/users.sql",
+    ]);
+  });
+
+  it("keeps Drizzle TypeScript schema files while ignoring generated SQL migrations", async () => {
+    const repoRoot = await mkdtemp(path.join(os.tmpdir(), "mergebrake-drizzle-"));
+    await mkdir(path.join(repoRoot, "drizzle", "meta"), { recursive: true });
+    await writeFile(
+      path.join(repoRoot, "drizzle", "schema.ts"),
+      `export const users = { fullName: "full_name" };\n`,
+    );
+    await writeFile(
+      path.join(repoRoot, "drizzle", "0001_drop.sql"),
+      `ALTER TABLE users DROP COLUMN full_name;\n`,
+    );
+
+    const refs = await findCrossReferences({
+      repoRoot,
+      symbols: ["full_name"],
+    });
+
+    expect(refs.map((ref) => ref.file)).toEqual(["drizzle/schema.ts"]);
+  });
 });

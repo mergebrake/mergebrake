@@ -24,7 +24,7 @@ export const astAddForeignKeyWithoutNotValid: AstRule = {
     if (!isAlterTable(ctx.statement)) return [];
     const findings = [];
     const table = relationName(ctx.statement.node.relation);
-    const fresh = isTableFreshInBlock(ctx.block, table);
+    const fresh = isTableFreshInBlock(ctx, table);
     for (const c of ctx.statement.node.cmds ?? []) {
       const cmd = c.AlterTableCmd;
       if (cmd?.subtype !== "AT_AddConstraint") continue;

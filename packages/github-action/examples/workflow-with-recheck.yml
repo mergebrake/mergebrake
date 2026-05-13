@@ -42,6 +42,6 @@ jobs:
         with:
           fail-on: BLOCK
           # Optional: pin the version your team has tested with
-          # mergebrake-version: 0.0.2
+          # mergebrake-version: 0.0.10
           # Optional: tighten who can trigger a recheck
           # recheck-allowed-associations: 'OWNER,MEMBER'

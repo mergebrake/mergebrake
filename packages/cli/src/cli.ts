@@ -12,6 +12,7 @@ import {
   DEFAULT_STICKY_MARKER,
 } from "./github-comment.js";
 import { resolveChangedInputs } from "./changed-inputs.js";
+import { MERGEBRAKE_VERSION } from "./version.js";
 
 const program = new Command();
 
@@ -20,7 +21,7 @@ program
   .description(
     "Catch database-breaking PRs before merge by mapping schema changes to impacted app code.",
   )
-  .version("0.0.1");
+  .version(MERGEBRAKE_VERSION);
 
 program
   .command("scan", { isDefault: true })

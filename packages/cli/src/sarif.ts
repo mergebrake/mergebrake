@@ -1,4 +1,5 @@
 import type { AnalysisReport, Finding, Severity } from "mergebrake-shared";
+import { MERGEBRAKE_VERSION } from "./version.js";
 
 /**
  * SARIF 2.1.0 envelope produced by `mergebrake scan --format sarif`.
@@ -62,7 +63,6 @@ const SEVERITY_TO_LEVEL: Record<Severity, SarifLevel> = {
 };
 
 const TOOL_NAME = "MergeBrake";
-const TOOL_VERSION = "0.0.1";
 const TOOL_URI = "https://mergebrake.dev";
 
 export function renderSarif(report: AnalysisReport): string {
@@ -77,7 +77,7 @@ export function renderSarif(report: AnalysisReport): string {
         tool: {
           driver: {
             name: TOOL_NAME,
-            version: TOOL_VERSION,
+            version: MERGEBRAKE_VERSION,
             informationUri: TOOL_URI,
             rules,
           },

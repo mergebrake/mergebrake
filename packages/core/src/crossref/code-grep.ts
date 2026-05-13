@@ -6,30 +6,33 @@ import type { CrossRef } from "mergebrake-shared";
 export interface FindCrossReferencesOptions {
   repoRoot: string;
   symbols: string[];
-  /** Globs to scan. Defaults to common TS/JS/Python paths excluding generated. */
+  /** Globs to scan. Defaults to repo-wide app-code paths excluding generated. */
   globs?: string[];
   /** Hard cap on matches per symbol to keep reports actionable. */
   maxMatchesPerSymbol?: number;
 }
 
 const DEFAULT_GLOBS = [
-  "src/**/*.{ts,tsx,js,jsx,mts,cts,sql,py,go,java,kt,rb,php,cs}",
-  "app/**/*.{ts,tsx,js,jsx,sql}",
-  "lib/**/*.{ts,tsx,js,jsx,mts,cts,sql,py}",
-  "server/**/*.{ts,tsx,js,jsx,mts,cts,sql,py,go}",
-  "api/**/*.{ts,tsx,js,jsx,sql,py}",
-  "queries/**/*.sql",
-  "sql/**/*.sql",
-  "**/*.py",
+  "**/*.{ts,tsx,js,jsx,mts,cts,sql,py,go,java,kt,rb,php,cs,rs,scala,swift}",
   "!**/node_modules/**",
   "!**/dist/**",
   "!**/build/**",
+  "!**/out/**",
   "!**/.next/**",
+  "!**/.nuxt/**",
+  "!**/.svelte-kit/**",
+  "!**/.turbo/**",
+  "!**/.vercel/**",
+  "!**/.cache/**",
   "!**/coverage/**",
   "!**/generated/**",
+  "!**/__generated__/**",
+  "!**/vendor/**",
+  "!**/target/**",
   "!**/.git/**",
   "!**/prisma/migrations/**",
-  "!**/drizzle/**",
+  "!**/drizzle/**/*.sql",
+  "!**/drizzle/meta/**",
   "!**/migrations/**",
   "!**/db/migrate/**",
 ];

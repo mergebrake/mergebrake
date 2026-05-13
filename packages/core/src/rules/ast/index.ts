@@ -1,6 +1,8 @@
 import type { Finding, OrmStack, DatabaseDialect } from "mergebrake-shared";
 import type { SqlBlock } from "../../parsers/orm-sql-extractor.js";
 import type { ParsedStatement } from "../../parsers/postgres-ast.js";
+import { relationName } from "../../parsers/postgres-ast.js";
+import { normalizeTableName } from "./_shared.js";
 
 import { astDropColumn } from "./destructive-drop-column.js";
 import { astDropTable } from "./destructive-drop-table.js";
@@ -29,6 +31,8 @@ export interface AstRuleContext {
   dialect: DatabaseDialect;
   block: SqlBlock;
   statement: ParsedStatement;
+  /** Tables created by real CREATE TABLE statements in this parsed SQL block. */
+  freshTables: ReadonlySet<string>;
 }
 
 export interface AstRule {
@@ -68,6 +72,7 @@ export function runAstRules(input: {
   statements: ParsedStatement[];
 }): Finding[] {
   const findings: Finding[] = [];
+  const freshTables = collectFreshTables(input.statements);
   for (const statement of input.statements) {
     for (const rule of astRules) {
       findings.push(
@@ -76,9 +81,25 @@ export function runAstRules(input: {
           dialect: input.dialect,
           block: input.block,
           statement,
+          freshTables,
         }),
       );
     }
   }
   return findings;
+}
+
+interface CreateStmtLike {
+  relation?: Parameters<typeof relationName>[0];
+}
+
+function collectFreshTables(statements: ParsedStatement[]): Set<string> {
+  const tables = new Set<string>();
+  for (const statement of statements) {
+    if (statement.kind !== "CreateStmt") continue;
+    const node = statement.node as CreateStmtLike;
+    const table = normalizeTableName(relationName(node.relation));
+    if (table) tables.add(table);
+  }
+  return tables;
 }

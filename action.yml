@@ -55,7 +55,7 @@ inputs:
     required: false
     default: ''
   mergebrake-version:
-    description: 'Version of the `mergebrake` npm package to run (e.g. `0.0.1` or `latest`).'
+    description: 'Version of the `mergebrake` npm package to run (e.g. `0.0.10` or `latest`).'
     required: false
     default: 'latest'
   output-annotations:
@@ -262,24 +262,28 @@ runs:
         MERGEBRAKE_CONFIG: ${{ inputs.config }}
       run: |
         set -o pipefail
-        ORM_FLAG=""
-        if [ -n "${MERGEBRAKE_ORM}" ]; then ORM_FLAG="--orm ${MERGEBRAKE_ORM}"; fi
-        BASE_REPO_FLAG=""
+        INPUT_ARGS=()
+        while IFS= read -r input; do
+          if [ -n "${input}" ]; then INPUT_ARGS+=("${input}"); fi
+        done < <(printf '%s' "${MERGEBRAKE_INPUTS}" | tr '[:space:]' '\n')
+        ORM_ARGS=()
+        if [ -n "${MERGEBRAKE_ORM}" ]; then ORM_ARGS=(--orm "${MERGEBRAKE_ORM}"); fi
+        BASE_REPO_ARGS=()
         if [ -n "${MERGEBRAKE_BASE_REPO}" ]; then
-          BASE_REPO_FLAG="--base-repo ${MERGEBRAKE_BASE_REPO}"
+          BASE_REPO_ARGS=(--base-repo "${MERGEBRAKE_BASE_REPO}")
         elif [ "${MERGEBRAKE_BASE_CHECKOUT}" = "true" ] && [ -d "__mergebrake_base" ]; then
-          BASE_REPO_FLAG="--base-repo __mergebrake_base"
+          BASE_REPO_ARGS=(--base-repo "__mergebrake_base")
           echo "MergeBrake: deploy-order analysis enabled (base ref: ${MERGEBRAKE_BASE_REF})."
         fi
-        CONFIG_FLAG=""
-        if [ -n "${MERGEBRAKE_CONFIG}" ]; then CONFIG_FLAG="--config ${MERGEBRAKE_CONFIG}"; fi
-        SCOPE_FLAG=""
+        CONFIG_ARGS=()
+        if [ -n "${MERGEBRAKE_CONFIG}" ]; then CONFIG_ARGS=(--config "${MERGEBRAKE_CONFIG}"); fi
+        SCOPE_ARGS=()
         if [ -n "${MERGEBRAKE_SCAN_SCOPE}" ]; then
           if [ "${MERGEBRAKE_SCAN_SCOPE}" != "changed" ] && [ "${MERGEBRAKE_SCAN_SCOPE}" != "all" ]; then
             echo "Unknown scan-scope value: ${MERGEBRAKE_SCAN_SCOPE}" >&2
             exit 2
           fi
-          SCOPE_FLAG="--scan-scope ${MERGEBRAKE_SCAN_SCOPE}"
+          SCOPE_ARGS=(--scan-scope "${MERGEBRAKE_SCAN_SCOPE}")
         fi
         if [ "${MERGEBRAKE_SCAN_SCOPE:-${MERGEBRAKE_DEFAULT_SCAN_SCOPE}}" = "changed" ] && [ -z "${MERGEBRAKE_BASE_REF:-}" ]; then
           echo "MergeBrake: scan-scope=changed but no base ref was resolved; scanning all configured inputs." >&2
@@ -287,15 +291,15 @@ runs:
 
         # Always produce a JSON report for the comment step; the exit code is
         # carried by a separate invocation that respects `fail-on`.
-        npx --yes "mergebrake@${MERGEBRAKE_VERSION}" scan ${MERGEBRAKE_INPUTS} \
+        npx --yes "mergebrake@${MERGEBRAKE_VERSION}" scan "${INPUT_ARGS[@]}" \
           --dialect "${MERGEBRAKE_DIALECT}" \
           --format json \
           --commits /tmp/mergebrake-commits.txt \
           --fail-on SAFE \
-          ${ORM_FLAG} \
-          ${BASE_REPO_FLAG} \
-          ${CONFIG_FLAG} \
-          ${SCOPE_FLAG} \
+          "${ORM_ARGS[@]}" \
+          "${BASE_REPO_ARGS[@]}" \
+          "${CONFIG_ARGS[@]}" \
+          "${SCOPE_ARGS[@]}" \
           > /tmp/mergebrake-report.json 2>/tmp/mergebrake-scan.err \
           || true  # never fail this step; failure policy is enforced below
 
@@ -317,28 +321,28 @@ runs:
 
         if [ "${MERGEBRAKE_ANNOTATIONS}" = "true" ]; then
           # Emit GitHub annotations alongside the sticky comment.
-          npx --yes "mergebrake@${MERGEBRAKE_VERSION}" scan ${MERGEBRAKE_INPUTS} \
+          npx --yes "mergebrake@${MERGEBRAKE_VERSION}" scan "${INPUT_ARGS[@]}" \
             --dialect "${MERGEBRAKE_DIALECT}" \
             --format github \
             --commits /tmp/mergebrake-commits.txt \
             --fail-on SAFE \
-            ${ORM_FLAG} \
-            ${BASE_REPO_FLAG} \
-            ${CONFIG_FLAG} \
-            ${SCOPE_FLAG} \
+            "${ORM_ARGS[@]}" \
+            "${BASE_REPO_ARGS[@]}" \
+            "${CONFIG_ARGS[@]}" \
+            "${SCOPE_ARGS[@]}" \
             || true
         fi
 
         if [ -n "${MERGEBRAKE_SARIF_FILE}" ]; then
-          npx --yes "mergebrake@${MERGEBRAKE_VERSION}" scan ${MERGEBRAKE_INPUTS} \
+          npx --yes "mergebrake@${MERGEBRAKE_VERSION}" scan "${INPUT_ARGS[@]}" \
             --dialect "${MERGEBRAKE_DIALECT}" \
             --format sarif \
             --commits /tmp/mergebrake-commits.txt \
             --fail-on SAFE \
-            ${ORM_FLAG} \
-            ${BASE_REPO_FLAG} \
-            ${CONFIG_FLAG} \
-            ${SCOPE_FLAG} \
+            "${ORM_ARGS[@]}" \
+            "${BASE_REPO_ARGS[@]}" \
+            "${CONFIG_ARGS[@]}" \
+            "${SCOPE_ARGS[@]}" \
             > "${MERGEBRAKE_SARIF_FILE}" || true
           if [ -s "${MERGEBRAKE_SARIF_FILE}" ]; then
             echo "sarif-file=${MERGEBRAKE_SARIF_FILE}" >> "${GITHUB_OUTPUT}"
@@ -358,13 +362,13 @@ runs:
         MERGEBRAKE_COMMENT_MARKER: ${{ inputs.comment-marker }}
         MERGEBRAKE_SKIP_WHEN_SAFE: ${{ inputs.skip-comment-when-safe }}
       run: |
-        SKIP_FLAG=""
-        if [ "${MERGEBRAKE_SKIP_WHEN_SAFE}" = "true" ]; then SKIP_FLAG="--skip-when-safe"; fi
+        SKIP_ARGS=()
+        if [ "${MERGEBRAKE_SKIP_WHEN_SAFE}" = "true" ]; then SKIP_ARGS=(--skip-when-safe); fi
         if ! npx --yes "mergebrake@${MERGEBRAKE_VERSION}" comment \
           --from-file /tmp/mergebrake-report.json \
           --marker "${MERGEBRAKE_COMMENT_MARKER}" \
           --github-output \
-          ${SKIP_FLAG}; then
+          "${SKIP_ARGS[@]}"; then
           echo "MergeBrake sticky comment failed; continuing with annotations/fail-on policy. Check pull-requests: write permissions." >&2
           echo "action=skipped" >> "${GITHUB_OUTPUT}"
         fi

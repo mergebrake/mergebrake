@@ -49,6 +49,7 @@ describe("renderSarif", () => {
   it("emits SARIF 2.1.0 envelope", () => {
     expect(json.version).toBe("2.1.0");
     expect(json.$schema).toContain("sarif-schema-2.1.0");
+    expect(json.runs[0].tool.driver.version).toBe("0.0.10");
     expect(json.runs).toHaveLength(1);
   });
 
